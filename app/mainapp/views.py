@@ -5,7 +5,8 @@ from django.shortcuts import render
 
 def mainPage_view(request):
     context = {}
-    return render(request, "main.html", context) 
+    return render(request, "main.html", context)
+
 
 def loginPage_view(request):
     context = {}
