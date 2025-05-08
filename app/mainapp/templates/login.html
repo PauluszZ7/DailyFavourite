@@ -1,1 +1,21 @@
-Junge und wie du wieder aussiehst
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LoginPage</title>
+</head>
+<body>
+    <h1>DailyFavourite</h1>
+    <p>Hier bitte einloggen.</p>
+
+    <h1>Login</h1>
+    <img src="{% static 'images/jaha.jpg' %}" alt="Loginbild" width="300"><br>
+    <label for="nutzername">Benutzername:</label><br>
+    <input type="text" id="nutzername" name="nutzername" required><br><br>
+
+    <label for="password">Passwort:</label><br>
+    <input type="password" id="password" name="password" required><br><br>
+
+    <button type="login">Einloggen</button>
+</body>
+</html>
