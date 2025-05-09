@@ -12,6 +12,7 @@ def loginPage_view(request):
     context = {}
     return render(request, "login.html", context)
 
+
 def registrationPage_view(request):
     context = {}
     return render(request, "registration.html", context)
