@@ -41,6 +41,13 @@ class TestAuthentication:
         UserManagement(simRequest).login(USERNAME, PASSWORD)
         assert simRequest.user.is_authenticated
 
+    def test_get_user(self, simRequest, simUser):
+        UserManagement(simRequest).login(USERNAME, PASSWORD)
+        assert simRequest.user.is_authenticated
+
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
     @pytest.mark.parametrize(
         "username, password",
         [

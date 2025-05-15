@@ -29,3 +29,11 @@ class DailyFavouriteNoUserFound(DailyFavouriteBaseException):
         message = "No user found with matching credentials"
         context = {"username": username}
         super().__init__(404, message, context)
+
+
+class DailyFavouriteNoUserLoggedIn(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "Currently no User is logged in."
+        context = {"messag": "Currently no user is logged in."}
+        super().__init__(500, message, context)
