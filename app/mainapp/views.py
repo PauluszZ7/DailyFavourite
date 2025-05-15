@@ -1,6 +1,7 @@
+import json
+from django.http import JsonResponse
 from django.shortcuts import render
-
-# Create your views here.
+from django.contrib.auth import authenticate, login
 
 
 def mainPage_view(request):
@@ -16,3 +17,28 @@ def loginPage_view(request):
 def registrationPage_view(request):
     context = {}
     return render(request, "registration.html", context)
+
+
+def register_view(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        username = data.get("username")
+        print("Neuer Benutzername:", username)
+        return JsonResponse({"message": "Empfangen"}, status=200)
+    return JsonResponse({"error": "Nur POST erlaubt"}, status=400)
+
+
+def api_login_view(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        username = data.get("username")
+        password = data.get("password")
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return JsonResponse({"message": "Login erfolgreich"}, status=200)
+        else:
+            return JsonResponse({"message": "Login fehlgeschlagen"}, status=401)
+
+    return JsonResponse({"error": "Nur POST erlaubt"}, status=405)
