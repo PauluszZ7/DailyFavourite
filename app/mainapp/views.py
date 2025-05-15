@@ -2,7 +2,6 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login
-from django.views.decorators.csrf import csrf_exempt
 
 
 def mainPage_view(request):
@@ -27,6 +26,7 @@ def register_view(request):
         print("Neuer Benutzername:", username)
         return JsonResponse({"message": "Empfangen"}, status=200)
     return JsonResponse({"error": "Nur POST erlaubt"}, status=400)
+
 
 def api_login_view(request):
     if request.method == "POST":
