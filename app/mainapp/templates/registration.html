@@ -14,10 +14,55 @@
     <input type="text" id="nutzername" name="nutzername" required><br><br>
 
     <label for="password">Passwort:</label><br>
-    <input type="password" id="password" name="password" required><br><br>
+    <input type="password" id="password1" name="password" required><br><br>
     <label for="password2">Passwort bestätigen:</label><br>
     <input type="password2" id="password2" name="password2" required><br><br>
 
-    <button type="login">Bestätigen</button>
+    <button onclick="registration()">Bestätigen</button>
+
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith(name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        function registration() {
+            const username = document.getElementById("nutzername").value;
+            const password1 = document.getElementById("password1").value;
+            const password2 = document.getElementById("password2").value;
+        
+            fetch("/api/registration/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password1
+                })
+            }) 
+            .then(response => response.json())
+            .then(data => {
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.message || "registrierung erfolgreich");
+                }
+            });
+        }
+        </script>
+
 </body>
 </html>

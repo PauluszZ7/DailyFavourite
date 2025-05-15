@@ -21,7 +21,9 @@ from mainapp.views import (
     mainPage_view,
     loginPage_view,
     registrationPage_view,
-    api_login_view,
+    login_view,
+    registration_view,
+    logout_view,
 )
 
 urlpatterns = [
@@ -29,5 +31,7 @@ urlpatterns = [
     path("", mainPage_view, name="home"),
     path("login/", loginPage_view, name="login"),
     path("registration/", registrationPage_view, name="registration"),
-    path("api/login/", api_login_view, name="api-login"),
+    path("api/login/", login_view, name="backend-login"),
+    path("api/logout/", logout_view, name="logout"),
+    path("api/registration/", registration_view, name="backend-registration"),
 ]
