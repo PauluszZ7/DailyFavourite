@@ -5,9 +5,10 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 
 from mainapp.services.userManagement import UserManagement
+
+
 # FRONTEND
 @login_required
-
 def mainPage_view(request):
     user = UserManagement(request).getCurrentUser()
     context = {"username": user.username}
@@ -22,7 +23,8 @@ def loginPage_view(request):
 def registrationPage_view(request):
     context = {}
     return render(request, "registration.html", context)
-  
+
+
 def mainfeedPage_view(request):
     context = {}
     return render(request, "mainfeed.html", context)
@@ -37,9 +39,12 @@ def favouritePage_view(request):
     context = {}
     return render(request, "favourites.html", context)
 
+
 def basenavPage_view(request):
     context = {}
     return render(request, "base.html", context)
+
+
 # BACKEND
 def registration_view(request):
     if request.method == "POST":
@@ -64,7 +69,7 @@ def login_view(request):
 
     return JsonResponse({"error": "Nur POST erlaubt"}, status=405)
 
- 
+
 def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
