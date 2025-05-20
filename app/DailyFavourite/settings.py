@@ -26,7 +26,21 @@ SECRET_KEY = "django-insecure-+-zy5d_5-xu(p-ebew%+*@2ns1g5lyqwfbgk@pvc*!p)dr64x1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "boar-game-bengal.ngrok-free.app",
+    "127.0.0.1",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://boar-game-bengal.ngrok-free.app",
+]
+
+# Erlaubt von NGROK genutzte Cookies
+if "ngrok" in os.getenv("HOST", ""):
+    SESSION_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -117,6 +131,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+LOGIN_URL = "/login/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

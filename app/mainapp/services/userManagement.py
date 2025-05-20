@@ -3,7 +3,10 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from mainapp.objects.exceptions import DailyFavouriteNoUserFound
+from mainapp.objects.exceptions import (
+    DailyFavouriteNoUserFound,
+    DailyFavouriteNoUserLoggedIn,
+)
 
 
 class UserManagement:
@@ -21,6 +24,18 @@ class UserManagement:
             request (Request): Request der aktuellen Anfrage
         """
         self.request = request
+
+    def getCurrentUser(self) -> User:
+        """
+        Gibt das User-Objekt des aktuell eingeloggten Users zurück.
+        NUR GEWOLLT UND MIT BEDACHT NUTZEN!
+
+        (Falls das jemand jemals liest: Ja die Funktion ist sehr unnötig ich weiß :) )
+        """
+        if self.checkIsLoggedIn():
+            return self.request.user
+        else:
+            raise DailyFavouriteNoUserLoggedIn()
 
     def login(self, username: str, password: str) -> None:
         """
