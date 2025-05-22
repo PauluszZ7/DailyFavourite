@@ -25,6 +25,26 @@ def registrationPage_view(request):
     return render(request, "registration.html", context)
 
 
+def mainfeedPage_view(request):
+    context = {}
+    return render(request, "mainfeed.html", context)
+
+
+def profilePage_view(request):
+    context = {}
+    return render(request, "profile.html", context)
+
+
+def favouritePage_view(request):
+    context = {}
+    return render(request, "favourites.html", context)
+
+
+def basenavPage_view(request):
+    context = {}
+    return render(request, "base.html", context)
+
+
 # BACKEND
 def registration_view(request):
     if request.method == "POST":
