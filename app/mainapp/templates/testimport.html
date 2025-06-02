@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Track Import testen</title>
+</head>
+<body>
+  <h2>Track Import (POST)</h2>
+  <form id="importForm">
+    <!-- CSRF-Token für Django-Formulare, falls du das Formular direkt per POST abschickst -->
+    {% csrf_token %}
+    <label for="trackId">Spotify Track ID:</label>
+    <input type="text" id="trackId" name="trackId" required />
+    <button type="submit">Importieren</button>
+  </form>
+
+  <pre id="response"></pre>
+
+  <script>
+    document.getElementById('importForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const trackId = document.getElementById('trackId').value;
+
+      try {
+        const res = await fetch('/api/import-track/', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            // CSRF-Token Header hinzufügen falls CSRF aktiviert ist, sonst 403
+            'X-CSRFToken': getCookie('csrftoken') 
+          },
+          body: JSON.stringify({ spotify_track_id: trackId })
+        });
+        const data = await res.json();
+        document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        document.getElementById('response').textContent = 'Fehler: ' + error.message;
+      }
+    });
+
+    // Funktion um CSRF Token aus Cookies zu holen (wichtig für POST-Requests in Django)
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim();
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+          }
+        }
+      }
+      return cookieValue;
+    }
+  </script>
+</body>
+</html>
