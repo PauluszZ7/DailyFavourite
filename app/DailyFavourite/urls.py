@@ -28,7 +28,7 @@ from mainapp.views import (
     login_view,
     registration_view,
     logout_view,
-    ImportTrackView,
+    # ImportTrackView,
     testimport_view,
 )
 
@@ -44,6 +44,6 @@ urlpatterns = [
     path("api/login/", login_view, name="backend-login"),
     path("api/logout/", logout_view, name="logout"),
     path("api/registration/", registration_view, name="backend-registration"),
-    path("api/import-track/", ImportTrackView.as_view(), name="import-track"),
+    # path("api/import-track/", ImportTrackView.as_view(), name="import-track"),
     path("testimport/", testimport_view, name="testimport"),
 ]

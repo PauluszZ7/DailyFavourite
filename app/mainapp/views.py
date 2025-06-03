@@ -4,7 +4,6 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from mainapp.services.userManagement import UserManagement
-from mainapp.services.database import create_or_update_track
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -87,28 +86,28 @@ def logout_view(request):
     return redirect(reverse("home"))
 
 
-class ImportTrackView(APIView):
+# class ImportTrackView(APIView):
 
-    def post(self, request):
-        serializer = ImportTrackSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#     def post(self, request):
+#         serializer = ImportTrackSerializer(data=request.data)
+#         if not serializer.is_valid():
+#             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        track_id = serializer.validated_data["spotify_track_id"]
+#         track_id = serializer.validated_data["spotify_track_id"]
 
-        try:
-            track_data = fetch_spotify_track(track_id)
+#         try:
+#             track_data = fetch_spotify_track(track_id)
 
-            create_or_update_track(track_data)
+#             create_or_update_music(track_data)
 
-            return Response(
-                {"detail": "Track importiert."}, status=status.HTTP_201_CREATED
-            )
+#             return Response(
+#                 {"detail": "Track importiert."}, status=status.HTTP_201_CREATED
+#             )
 
-        except SpotifyTrackNotFoundException as e:
-            return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
-        except Exception:
-            return Response(
-                {"detail": "Interner Serverfehler."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+#         except SpotifyTrackNotFoundException as e:
+#             return Response({"detail": str(e)}, status=status.HTTP_404_NOT_FOUND)
+#         except Exception:
+#             return Response(
+#                 {"detail": "Interner Serverfehler."},
+#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             )

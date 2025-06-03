@@ -10,3 +10,4 @@ class TrackDTO:
 
     image_url: str | None
     preview_url: str | None
+    song_url: str | None
