@@ -32,7 +32,7 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://boar-game-bengal.ngrok-free.app",
+    "https://sharing-hog-relative.ngrok-free.app",
 ]
 
 # Erlaubt von NGROK genutzte Cookies
@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "mainapp",
+    "DailyFavourite",
 ]
 
 MIDDLEWARE = [
