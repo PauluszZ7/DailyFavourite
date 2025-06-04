@@ -3,7 +3,7 @@ from typing import List, Tuple
 import os
 import requests
 import base64
-from mainapp.objects.dtos import TrackDTO
+from mainapp.objects.dtos import MusicDTO
 
 load_dotenv(dotenv_path="../static/.env.local")
 
@@ -32,21 +32,21 @@ class SpotifyConnector:
 
         return response.json().get("access_token")
 
-    def get_Track(self, track_id: str) -> TrackDTO:
+    def get_Track(self, track_id: str) -> MusicDTO:
         url = f"https://api.spotify.com/v1/tracks/{track_id}"
         response = requests.get(
             url, headers={"Authorization": f"Bearer {self._access_token}"}
         )
 
         # if response.status_code == 404:
-            # raise SpotifyTrackNotFoundException(
-            #     f"Spotify Track mit ID {track_id} nicht gefunden."
-            # )
+        # raise SpotifyTrackNotFoundException(
+        #     f"Spotify Track mit ID {track_id} nicht gefunden."
+        # )
         response.raise_for_status()
 
         data = response.json()
 
-        return TrackDTO(
+        return MusicDTO(
             id=data["id"],
             name=data["name"],
             artist=", ".join([artist["name"] for artist in data["artists"]]),
@@ -77,4 +77,3 @@ class SpotifyConnector:
         for item in data.get("tracks", {}).get("items", []):
             results.append((item["id"], item["name"]))
         return results
-

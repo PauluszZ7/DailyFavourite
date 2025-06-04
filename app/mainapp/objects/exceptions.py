@@ -37,4 +37,3 @@ class DailyFavouriteNoUserLoggedIn(DailyFavouriteBaseException):
         message = "Currently no User is logged in."
         context = {"messag": "Currently no user is logged in."}
         super().__init__(500, message, context)
-

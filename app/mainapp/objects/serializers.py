@@ -1,35 +1,10 @@
 from rest_framework import serializers
-from mainapp.models import User, Group, Membership, Music, Post, Comment, Vote
+from mainapp.models import UserMeta, Group, Membership, Music, Post, Comment, Vote
 
-###### Beispiel verwendung
-# from dataclasses import dataclass
-# from dataclasses_json import dataclass_json
-# from rest_framework import serializers
-
-# @dataclass_json
-# @dataclass
-# class UserDTO:
-#     id: int
-#     username: str
-#     profile_picture: str
-#     favorite_artist: str
-#     favorite_genre: str
-
-# # Serialisierung
-# user_instance = User.objects.get(id=1)
-# user_serializer = UserSerializer(user_instance)
-# json_data = user_serializer.data
-# user_dto = UserDTO.from_json(json.dumps(json_data))
-
-# # Deserialisierung
-# json_input = '{"id": 2, "username": "user2", ...}'
-# user_dto = UserDTO.from_json(json_input)
-# # Mapping back zu Model oder weiteres Handling
-########
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
-        model = User
+        model = UserMeta
         fields = [
             "id",
             "username",
@@ -65,7 +40,6 @@ class MusicSerializer(serializers.ModelSerializer):
         model = Music
         fields = [
             "id",
-            "spotify_id",
             "name",
             "artist",
             "album",
@@ -91,7 +65,3 @@ class VoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Vote
         fields = ["id", "user", "post", "is_upvote"]
-
-
-class ImportTrackSerializer(serializers.Serializer):
-    spotify_track_id = serializers.CharField(max_length=100)

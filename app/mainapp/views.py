@@ -67,4 +67,3 @@ def login_view(request):
 def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
-

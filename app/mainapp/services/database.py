@@ -1,47 +1,60 @@
-from mainapp.models import Music, User, Post
-from mainapp.objects.dtos import TrackDTO
+from mainapp.objects.dtos import ModelDTO
+from mainapp.objects.enums import DTOEnum
+
+
+from typing import Any
+from dataclasses import is_dataclass, fields
 
 
 class DatabaseManagement:
-    current_user:str
+    current_user: str
 
     def __init__(self, current_user) -> None:
         self.current_user = current_user
 
-    def get_music(self, id:str) -> TrackDTO:
-        music = Music.objects.get(id=id)
-        return TrackDTO(
-            id=music.id,
-            name=music.name,
-            artist=music.artist,
-            album=music.album,
-            image_url=music.image_url,
-            preview_url=music.preview_url,
-            song_url=music.song_url,
-        )
+    def create_or_update(self, dto: ModelDTO, type: DTOEnum) -> None:
+        """
+        Does NOT update inner dtos (Foreign Keys).
+        """
+        try:
+            model = type.getModel()
+            defaults = self._dto_to_defaults(dto)
 
-    def delete_music(self, music:TrackDTO) -> None:
-        pass
+            obj, created = model.objects.update_or_create(id=dto.id, defaults=defaults)
+            return obj
+        except Exception as e:
+            raise e
 
+    def get(self, id: str | int, type: DTOEnum) -> ModelDTO:
+        model = type.getModel().objects.get(id=id)
+        serializer = type.getSerializer()(model)
+        dto = type.getDTO()
 
-    # def create_or_update_music(self, track_dto: TrackDTO):
-        # try:
-        #     track, created = Music.objects.update_or_create(
-        #         id=track_dto.id,
-        #         defaults={
-        #             "name": track_dto.name,
-        #             "artist": track_dto.artist,
-        #             "album": track_dto.album,
-        #             "image_url": track_dto.image_url,
-        #             "preview_url": track_dto.preview_url,
-        #             "song_url": track_dto.song_url,
-        #         },
-        #     )
-        #     return track
-        # except IntegrityError as e:
-        #     raise TrackSaveException(f"Fehler beim Speichern des Tracks: {e}")
-        # except InvalidTrackDTOException:
-        #     raise
+        return dto(**serializer.data)
 
+    def get_or_create(self, dto: ModelDTO, type: DTOEnum) -> Any:
+        try:
+            model = type.getModel()
+            defaults = self._dto_to_defaults(dto)
 
+            obj, created = model.objects.get_or_create(id=dto.id, defaults=defaults)
+            return obj
+        except Exception as e:
+            raise e
 
+    def delete(self, dto: ModelDTO, type: DTOEnum) -> None:
+        type.getModel().objects.filter(id=dto.id).delete()
+
+    # Helpers
+    def _dto_to_defaults(self, dto: ModelDTO) -> dict:
+        defaults = {}
+        for field in fields(dto):
+            value = getattr(dto, field.name)
+
+            if is_dataclass(value):
+                # Rekursiv abspeichern, bevor wir's einsetzen
+                inner_model = self.get_or_create(value, DTOEnum.fromDTO(value))
+                defaults[field.name] = inner_model
+            else:
+                defaults[field.name] = value
+        return defaults

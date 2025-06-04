@@ -1,40 +1,68 @@
-from mainapp.objects.dtos import TrackDTO
+from mainapp.objects.enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 
 import pytest
+import datetime
+from dataclasses import fields, is_dataclass
+from typing import get_args, get_origin
+
 
 @pytest.mark.django_db
 class TestDatabase:
     USER_ID = 12345
 
-    def test_create_music(self):
-        music_id = "1234"
+    @pytest.mark.parametrize(
+        "dto_type",
+        [
+            DTOEnum.USER,
+            DTOEnum.GROUP,
+            DTOEnum.MUSIC,
+            DTOEnum.COMMENT,
+            DTOEnum.POST,
+            DTOEnum.VOTE,
+        ],
+    )
+    def test_create(self, dto_type: DTOEnum):
+        object_id = 1234
+        dto = dto_type.getDTO()
 
-        music = fetch_spotify_track(music_id)
+        test_object = create_dummy_instance(dto)
+        test_object.id = object_id
 
         dbm = DatabaseManagement(self.USER_ID)
-        dbm.create_or_update_music(music)
-        music = dbm.get_music(id=music.id)
-        
-        assert music is not None
-        assert music.id == music_id
+        dbm.create_or_update(test_object, dto_type)
+        test_dto = dbm.get(id=test_object.id, type=dto_type)
+
+        assert test_dto is not None
+        assert type(test_dto) is dto
+        if dto_type == DTOEnum.MUSIC:
+            assert test_dto.id == str(object_id)
+        else:
+            assert test_dto.id == object_id
+
+        for f in fields(test_dto):
+            assert f is not None
 
 
-
-    # def test_get_user_posted_music(self):
-    #     pass
-
-
+# Helpers
+def create_dummy_instance(cls):
+    return cls(**{f.name: dummy_value(f.type) for f in fields(cls)})
 
 
-def fetch_spotify_track(id:str) -> TrackDTO:
-    # Temporäres Dummy-Return bis Spotify-Integration steht
-    return TrackDTO(
-        id=id,
-        name="Fake Song",
-        artist="Fake Artist",
-        album="Fake Album",
-        image_url="http://example.com/image.jpg",
-        preview_url="http://example.com/preview.mp3",
-        song_url="http://example.com/song",
-    )
+def dummy_value(field_type):
+    origin = get_origin(field_type)
+    args = get_args(field_type)
+
+    if origin is list:
+        return [dummy_value(args[0])] if args else []
+    if field_type is int:
+        return 1
+    if field_type is str:
+        return "test"
+    if field_type is bool:
+        return True
+    if field_type is datetime.datetime:
+        return datetime.datetime.now()
+    if is_dataclass(field_type):
+        return create_dummy_instance(field_type)
+    return None

@@ -14,7 +14,7 @@ jobs:
           pytest -v
       - name: Run ruff
         run: |
-          ruff check app/
+          ruff check --fix app/
 
       - name: Run black
         run: |

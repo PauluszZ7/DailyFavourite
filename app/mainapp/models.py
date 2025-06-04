@@ -1,8 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser#, Group, Permission
 
 
 class UserMeta(models.Model):
+    id = models.AutoField(primary_key=True)
     username = models.CharField(max_length=100)
     profile_picture = models.ImageField(upload_to="profiles/", null=True, blank=True)
     favorite_artist = models.CharField(max_length=255, null=True, blank=True)
@@ -31,6 +31,7 @@ class UserMeta(models.Model):
 
 
 class Group(models.Model):
+    id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(null=True, blank=True)
@@ -41,8 +42,9 @@ class Group(models.Model):
 
 
 class Membership(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
-    group = models.ForeignKey(GroupMeta, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ("user", "group")
@@ -59,13 +61,15 @@ class Music(models.Model):
 
 
 class Post(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
-    group = models.ForeignKey(GroupMeta, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
     music = models.ForeignKey(Music, on_delete=models.CASCADE)
     posted_at = models.DateTimeField(auto_now_add=True)
 
 
 class Comment(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     content = models.TextField()
@@ -73,6 +77,7 @@ class Comment(models.Model):
 
 
 class Vote(models.Model):
+    id = models.AutoField(primary_key=True)
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     is_upvote = models.BooleanField()
