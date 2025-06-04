@@ -1,9 +1,15 @@
 from dotenv import load_dotenv
 from typing import List, Tuple
+
 import os
 import requests
 import base64
+
 from mainapp.objects.dtos import MusicDTO
+from mainapp.objects.exceptions import (
+    DailyFavouriteSpotifyInvalidBase62ID,
+    DailyFavouriteSpotifyTrackNotFound,
+)
 
 load_dotenv(dotenv_path="../static/.env.local")
 
@@ -28,7 +34,7 @@ class SpotifyConnector:
             },
             data={"grant_type": "client_credentials"},
         )
-        response.raise_for_status()  # was für hochwerfen @Lauryn13
+        response.raise_for_status()
 
         return response.json().get("access_token")
 
@@ -38,18 +44,24 @@ class SpotifyConnector:
             url, headers={"Authorization": f"Bearer {self._access_token}"}
         )
 
-        # if response.status_code == 404:
-        # raise SpotifyTrackNotFoundException(
-        #     f"Spotify Track mit ID {track_id} nicht gefunden."
-        # )
         response.raise_for_status()
 
         data = response.json()
 
+        if "error" in data.keys():
+            if data["error"]["status"] == 404:
+                raise DailyFavouriteSpotifyTrackNotFound(track_id)
+            else:
+                raise DailyFavouriteSpotifyInvalidBase62ID(track_id)
+
         return MusicDTO(
             id=data["id"],
             name=data["name"],
-            artist=", ".join([artist["name"] for artist in data["artists"]]),
+            artist=(
+                ", ".join([artist["name"] for artist in data["artists"]])
+                if len(data["artists"]) != 1
+                else data["artists"][0]["name"]
+            ),
             album=data["album"]["name"] if "album" in data else None,
             image_url=(
                 data["album"]["images"][0]["url"] if data["album"]["images"] else None
@@ -67,7 +79,7 @@ class SpotifyConnector:
             params={
                 "q": name,
                 "type": "track",
-                "limit": max_results,
+                "limit": max_results + 1,  # Spotify returns always -1
             },
         )
         response.raise_for_status()

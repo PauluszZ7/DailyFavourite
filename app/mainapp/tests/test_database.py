@@ -1,5 +1,6 @@
 from mainapp.objects.enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
+from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
 
 import pytest
 import datetime
@@ -22,7 +23,10 @@ class TestDatabase:
             DTOEnum.VOTE,
         ],
     )
-    def test_create(self, dto_type: DTOEnum):
+    def test_create_get_delete(self, dto_type: DTOEnum):
+        """
+        Tests create_or_get and create_or_update too
+        """
         object_id = 1234
         dto = dto_type.getDTO()
 
@@ -42,6 +46,12 @@ class TestDatabase:
 
         for f in fields(test_dto):
             assert f is not None
+
+        # delete
+        dbm.delete(test_dto, dto_type)
+
+        with pytest.raises(DailyFavouriteDBObjectNotFound):
+            dbm.get(id=test_object.id, type=dto_type)
 
 
 # Helpers

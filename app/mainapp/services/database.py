@@ -1,6 +1,9 @@
 from mainapp.objects.dtos import ModelDTO
 from mainapp.objects.enums import DTOEnum
-
+from mainapp.objects.exceptions import (
+    DailyFavouriteDBObjectCouldNotBeCreated,
+    DailyFavouriteDBObjectNotFound,
+)
 
 from typing import Any
 from dataclasses import is_dataclass, fields
@@ -23,10 +26,14 @@ class DatabaseManagement:
             obj, created = model.objects.update_or_create(id=dto.id, defaults=defaults)
             return obj
         except Exception as e:
-            raise e
+            raise DailyFavouriteDBObjectCouldNotBeCreated(dto, e)
 
     def get(self, id: str | int, type: DTOEnum) -> ModelDTO:
-        model = type.getModel().objects.get(id=id)
+        try:
+            model = type.getModel().objects.get(id=id)
+        except Exception:
+            raise DailyFavouriteDBObjectNotFound(type, id)
+
         serializer = type.getSerializer()(model)
         dto = type.getDTO()
 
@@ -40,7 +47,7 @@ class DatabaseManagement:
             obj, created = model.objects.get_or_create(id=dto.id, defaults=defaults)
             return obj
         except Exception as e:
-            raise e
+            raise DailyFavouriteDBObjectCouldNotBeCreated(dto, e)
 
     def delete(self, dto: ModelDTO, type: DTOEnum) -> None:
         type.getModel().objects.filter(id=dto.id).delete()
