@@ -3,7 +3,6 @@ from typing import List, Tuple
 import os
 import requests
 import base64
-from mainapp.objects.exceptions import SpotifyTrackNotFoundException
 from mainapp.objects.dtos import TrackDTO
 
 load_dotenv(dotenv_path="../static/.env.local")
@@ -39,10 +38,10 @@ class SpotifyConnector:
             url, headers={"Authorization": f"Bearer {self._access_token}"}
         )
 
-        if response.status_code == 404:
-            raise SpotifyTrackNotFoundException(
-                f"Spotify Track mit ID {track_id} nicht gefunden."
-            )
+        # if response.status_code == 404:
+            # raise SpotifyTrackNotFoundException(
+            #     f"Spotify Track mit ID {track_id} nicht gefunden."
+            # )
         response.raise_for_status()
 
         data = response.json()
@@ -79,16 +78,3 @@ class SpotifyConnector:
             results.append((item["id"], item["name"]))
         return results
 
-
-def fetch_spotify_track(track_id: str) -> TrackDTO:
-    # Temporäres Dummy-Return bis Spotify-Integration steht
-    if track_id == "invalid":
-        raise SpotifyTrackNotFoundException("Track not found.")
-    return TrackDTO(
-        name="Fake Song",
-        artist="Fake Artist",
-        album="Fake Album",
-        image_url="http://example.com/image.jpg",
-        preview_url="http://example.com/preview.mp3",
-        song_url="http://example.com/song",
-    )

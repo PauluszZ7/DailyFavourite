@@ -1,6 +1,31 @@
 from rest_framework import serializers
 from mainapp.models import User, Group, Membership, Music, Post, Comment, Vote
 
+###### Beispiel verwendung
+# from dataclasses import dataclass
+# from dataclasses_json import dataclass_json
+# from rest_framework import serializers
+
+# @dataclass_json
+# @dataclass
+# class UserDTO:
+#     id: int
+#     username: str
+#     profile_picture: str
+#     favorite_artist: str
+#     favorite_genre: str
+
+# # Serialisierung
+# user_instance = User.objects.get(id=1)
+# user_serializer = UserSerializer(user_instance)
+# json_data = user_serializer.data
+# user_dto = UserDTO.from_json(json.dumps(json_data))
+
+# # Deserialisierung
+# json_input = '{"id": 2, "username": "user2", ...}'
+# user_dto = UserDTO.from_json(json_input)
+# # Mapping back zu Model oder weiteres Handling
+########
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:

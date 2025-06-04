@@ -38,22 +38,3 @@ class DailyFavouriteNoUserLoggedIn(DailyFavouriteBaseException):
         context = {"messag": "Currently no user is logged in."}
         super().__init__(500, message, context)
 
-
-class TrackSaveException(Exception):
-    pass
-
-
-class UserNotFoundException(Exception):
-    pass
-
-
-class InvalidTrackDTOException(Exception):
-    pass
-
-
-class SpotifyTrackNotFoundException(Exception):
-    pass
-
-
-class InvalidTrackDataException(Exception):
-    pass

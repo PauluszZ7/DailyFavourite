@@ -21,15 +21,12 @@ from mainapp.views import (
     mainPage_view,
     loginPage_view,
     registrationPage_view,
-    basenavPage_view,
     mainfeedPage_view,
     profilePage_view,
     favouritePage_view,
     login_view,
     registration_view,
     logout_view,
-    # ImportTrackView,
-    testimport_view,
 )
 
 urlpatterns = [
@@ -37,13 +34,10 @@ urlpatterns = [
     path("", mainPage_view, name="home"),
     path("login/", loginPage_view, name="login"),
     path("registration/", registrationPage_view, name="registration"),
-    path("base/", basenavPage_view, name="basenav"),
     path("mainfeed/", mainfeedPage_view, name="mainfeed"),
     path("profile/", profilePage_view, name="profile"),
     path("favourites/", favouritePage_view, name="favourite"),
     path("api/login/", login_view, name="backend-login"),
-    path("api/logout/", logout_view, name="logout"),
+    path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
-    # path("api/import-track/", ImportTrackView.as_view(), name="import-track"),
-    path("testimport/", testimport_view, name="testimport"),
 ]
