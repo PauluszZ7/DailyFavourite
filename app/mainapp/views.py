@@ -3,7 +3,6 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-
 from mainapp.services.userManagement import UserManagement
 
 
@@ -38,11 +37,6 @@ def profilePage_view(request):
 def favouritePage_view(request):
     context = {}
     return render(request, "favourites.html", context)
-
-
-def basenavPage_view(request):
-    context = {}
-    return render(request, "base.html", context)
 
 
 # BACKEND
