@@ -1,5 +1,7 @@
 from typing import Any
 
+from mainapp.objects.dtos import ModelDTO
+
 
 class DailyFavouriteBaseException(Exception):
     """
@@ -53,6 +55,16 @@ class DailyFavouriteDBObjectCouldNotBeCreated(DailyFavouriteBaseException):
         message = "Database Object could not be created. See Details."
         context = {"DTO": dto, "Exception": baseException}
         super().__init__(500, message, context)
+
+
+class DailyFavouriteDBAttributeNotFound(DailyFavouriteBaseException):
+
+    def __init__(self, type: ModelDTO, attribute: str) -> None:
+        message = (
+            "Database Object with matching Attribute could not be found. See Details."
+        )
+        context = {"type": type, "attribute": attribute}
+        super().__init__(404, message, context)
 
 
 class DailyFavouriteSpotifyTrackNotFound(DailyFavouriteBaseException):
