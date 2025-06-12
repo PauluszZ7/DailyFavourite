@@ -37,7 +37,23 @@ class DailyFavouriteNoUserLoggedIn(DailyFavouriteBaseException):
 
     def __init__(self):
         message = "Currently no User is logged in."
-        context = {"messag": "Currently no user is logged in."}
+        context = {"message": "Currently no user is logged in."}
+        super().__init__(500, message, context)
+
+
+class DailyFavouriteMinimumRequiredParameter(DailyFavouriteBaseException):
+
+    def __init__(self, function_name, description) -> None:
+        message = "Function needs a minimum of given Parameters. See Details"
+        context = {"function_name": function_name, "description": description}
+        super().__init__(500, message, context)
+
+
+class DailyFavouriteAlreadyVotedForPost(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "User has already voted for the post."
+        context = {}
         super().__init__(500, message, context)
 
 
@@ -65,6 +81,14 @@ class DailyFavouriteDBAttributeNotFound(DailyFavouriteBaseException):
         )
         context = {"type": type, "attribute": attribute}
         super().__init__(404, message, context)
+
+
+class DailyFavouriteDBWrongObjectType(DailyFavouriteBaseException):
+
+    def __init__(self, requested_type, real_type):
+        message = "Database returned wrong unexpected object type. See Details"
+        context = {"expected": requested_type, "real": real_type}
+        super().__init__(500, message, context)
 
 
 class DailyFavouriteSpotifyTrackNotFound(DailyFavouriteBaseException):

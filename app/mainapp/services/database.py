@@ -54,11 +54,15 @@ class DatabaseManagement:
             raise DailyFavouriteDBObjectCouldNotBeCreated(dto, e)
 
     def list(
-        self, attribute_value: str, type: DTOEnum, filter_attr: str = "id"
+        self, attribute_value: str | int, type: DTOEnum, filter_attr: str = "id"
     ) -> List[ModelDTO]:
         model_class = type.getModel()
 
-        if filter_attr not in [field.name for field in model_class._meta.get_fields()]:
+        field_names = [field.name for field in model_class._meta.get_fields()]
+        if (
+            filter_attr.split("_")[0] not in field_names
+            and filter_attr not in field_names
+        ):
             raise DailyFavouriteDBAttributeNotFound(type.getDTO(), filter_attr)
 
         field = model_class._meta.get_field(filter_attr)

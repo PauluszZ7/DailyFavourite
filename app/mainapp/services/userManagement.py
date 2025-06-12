@@ -62,7 +62,7 @@ class UserManagement:
         """
         logout(self.request)
 
-    def register(self, username, password, dto:UserDTO) -> None:
+    def register(self, username, password, dto: UserDTO) -> None:
         """
         Registriert einen neuen Nutzer
 

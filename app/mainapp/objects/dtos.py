@@ -24,7 +24,7 @@ class GroupDTO(ModelDTO):
 
     # settings
     is_public: bool
-    max_posts_per_day: bool
+    max_posts_per_day: int
     post_permission: str
     read_permission: str
 
