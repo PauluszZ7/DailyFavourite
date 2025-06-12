@@ -5,7 +5,7 @@ from datetime import datetime
 
 @dataclass
 class ModelDTO:
-    id: int | str
+    id: int | str | None
 
 
 @dataclass
