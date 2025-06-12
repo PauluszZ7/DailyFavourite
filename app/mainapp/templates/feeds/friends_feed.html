@@ -2,7 +2,7 @@
 
 {% block feed_content %}
   {% for post in posts %}
-    {% if post.group.name == "Indie Fans" %}
+    {% if post.user.username in ["testuser1", "testuser2"] %}
       <div class="card mb-4 shadow-sm">
         <div class="card-header d-flex justify-content-between align-items-center">
           <strong>@{{ post.user.username }}</strong>
@@ -21,8 +21,8 @@
           </audio>
 
           <div class="d-flex justify-content-between mb-2">
-            <span> {{ post.votes.upvotes }}</span>
-            <span> {{ post.votes.downvotes }}</span>
+            <span>{{ post.votes.upvotes }}</span>
+            <span>{{ post.votes.downvotes }}</span>
           </div>
 
           {% if post.comments %}
@@ -38,6 +38,6 @@
       </div>
     {% endif %}
   {% empty %}
-    <p>Keine Gruppenbeiträge gefunden.</p>
+    <p>Keine Freundesbeiträge gefunden.</p>
   {% endfor %}
 {% endblock %}
