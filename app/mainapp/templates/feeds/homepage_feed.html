@@ -1,0 +1,15 @@
+{% extends "feeds/base_feed.html" %}
+
+{% block feed_content %}
+  {% for post in posts %}
+    <div class="card mb-3 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">@{{ post.user.username }}</h5>
+        <p class="card-text">{{ post.content }}</p>
+        <p class="card-subtitle text-muted small">{{ post.timestamp }}</p>
+      </div>
+    </div>
+  {% empty %}
+    <p>Keine Beiträge gefunden.</p>
+  {% endfor %}
+{% endblock %}
