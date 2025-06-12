@@ -17,6 +17,7 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
+from mainapp.views import homepageFeed_view
 from mainapp.views import (
     mainPage_view,
     loginPage_view,
@@ -37,6 +38,7 @@ urlpatterns = [
     path("mainfeed/", mainfeedPage_view, name="mainfeed"),
     path("profile/", profilePage_view, name="profile"),
     path("favourites/", favouritePage_view, name="favourite"),
+    path("homepage/", homepageFeed_view, name="homepage"),
     path("api/login/", login_view, name="backend-login"),
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
