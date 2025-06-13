@@ -30,6 +30,7 @@ from mainapp.views import (
     login_view,
     registration_view,
     logout_view,
+    vote_view,
 )
 
 urlpatterns = [
@@ -46,4 +47,5 @@ urlpatterns = [
     path("api/login/", login_view, name="backend-login"),
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
+    path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
 ]

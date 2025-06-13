@@ -98,3 +98,6 @@ def login_view(request):
 def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
+
+def vote_view(request):
+    return JsonResponse("Du hast gevoted.")
