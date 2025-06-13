@@ -1,43 +1,11 @@
-{% extends "feeds/base_feed.html" %}
+{% extends "base.html" %}
 
-{% block feed_content %}
-  {% for post in posts %}
-    {% if post.group.name == "Indie Fans" %}
-      <div class="card mb-4 shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>@{{ post.user.username }}</strong>
-          <small class="text-muted">{{ post.group.name }}</small>
-        </div>
 
-        <div class="card-body">
-          <h5 class="card-title">{{ post.music.name }}</h5>
-          <p class="card-subtitle text-muted mb-2">von {{ post.music.artist }}   {{ post.music.album }}</p>
+{% block content %}
 
-          <img src="{{ post.music.image_url }}" alt="Cover" class="img-fluid mb-3 rounded">
 
-          <audio controls class="w-100 mb-3">
-            <source src="{{ post.music.preview_url }}" type="audio/mpeg">
-            Dein Browser unterstützt kein Audio.
-          </audio>
+{% include "feeds/feed.html" %}
 
-          <div class="d-flex justify-content-between mb-2">
-            <span> {{ post.votes.upvotes }}</span>
-            <span> {{ post.votes.downvotes }}</span>
-          </div>
 
-          {% if post.comments %}
-            <hr>
-            <h6>Kommentare</h6>
-            <ul class="list-unstyled">
-              {% for comment in post.comments %}
-                <li class="mb-1"><strong>@{{ comment.user.username }}</strong>: {{ comment.content }}</li>
-              {% endfor %}
-            </ul>
-          {% endif %}
-        </div>
-      </div>
-    {% endif %}
-  {% empty %}
-    <p>Keine Gruppenbeiträge gefunden.</p>
-  {% endfor %}
 {% endblock %}
+
