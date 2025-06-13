@@ -1,11 +1,14 @@
 from mainapp.objects.enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
+from mainapp.objects.dtos import ModelDTO
+
+from django.db import models
 
 import pytest
-import datetime
-from dataclasses import fields, is_dataclass
-from typing import get_args, get_origin
+from dataclasses import fields
+
+from mainapp.tests.helpers import TEST_DATE, create_dummy_instance
 
 
 @pytest.mark.django_db
@@ -53,26 +56,63 @@ class TestDatabase:
         with pytest.raises(DailyFavouriteDBObjectNotFound):
             dbm.get(id=test_object.id, type=dto_type)
 
+    @pytest.mark.parametrize(
+        "dto_type",
+        [
+            DTOEnum.USER,
+            DTOEnum.GROUP,
+            DTOEnum.MUSIC,
+            DTOEnum.COMMENT,
+            DTOEnum.POST,
+            DTOEnum.VOTE,
+        ],
+    )
+    def test_list(self, dto_type: DTOEnum):
+        """
+        Tests list of DTO Objects
+        """
+        object_id = 1234
+        dto = dto_type.getDTO()
+
+        test_object = create_dummy_instance(dto)
+        test_object.id = object_id
+
+        dbm = DatabaseManagement(self.USER_ID)
+        dbm.get_or_create(test_object, dto_type)
+
+        test_object.id += 1
+        # Spezialfall VOTE: User und Music nicht doppelt.
+        if dto_type == DTOEnum.VOTE:
+            test_object.user.id += 1
+        dbm.get_or_create(test_object, dto_type)
+
+        fieldname, value = get_first_test_field_and_value(test_object)
+        dto_objects = dbm.list(value, dto_type, fieldname)
+
+        assert len(dto_objects) == 2
+        assert type(dto_objects[0]) is dto_type.getDTO()
+        assert type(dto_objects[1]) is dto_type.getDTO()
+
+        assert dto_objects[0].id == object_id or dto_objects[0].id == str(object_id)
+        assert dto_objects[1].id == object_id + 1 or dto_objects[1].id == str(
+            object_id + 1
+        )
+
 
 # Helpers
-def create_dummy_instance(cls):
-    return cls(**{f.name: dummy_value(f.type) for f in fields(cls)})
+def get_first_test_field_and_value(dto: ModelDTO):
+    model_class = DTOEnum.fromDTO(dto).getModel()
 
+    for field in model_class._meta.fields:
+        if field.name == "id":
+            continue
+        if isinstance(field, models.CharField):
+            return field.name, "test"
+        if isinstance(field, models.IntegerField):
+            return field.name, 1
+        if isinstance(field, models.DateTimeField):
+            return field.name, TEST_DATE
+        if isinstance(field, models.BooleanField):
+            return field.name, True
 
-def dummy_value(field_type):
-    origin = get_origin(field_type)
-    args = get_args(field_type)
-
-    if origin is list:
-        return [dummy_value(args[0])] if args else []
-    if field_type is int:
-        return 1
-    if field_type is str:
-        return "test"
-    if field_type is bool:
-        return True
-    if field_type is datetime.datetime:
-        return datetime.datetime.now()
-    if is_dataclass(field_type):
-        return create_dummy_instance(field_type)
-    return None
+    raise ValueError(f"No suitable field found for DTO: {dto}")

@@ -57,7 +57,6 @@ def groupFeed_view(request):
         posts_data = json.load(f)
 
     context = {"posts": posts_data}
-    print("Groupfeed geladen")
     return render(request, "feeds/group_feed.html", context)
 
 
@@ -99,7 +98,3 @@ def login_view(request):
 def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
-
-
-def vote_view(request):
-    return JsonResponse("Du hast gevoted.")
