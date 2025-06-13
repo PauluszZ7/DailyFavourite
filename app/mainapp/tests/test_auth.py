@@ -5,11 +5,8 @@ from django.test import RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
 
-from mainapp.objects.enums import DTOEnum
-from mainapp.services.database import DatabaseManagement
 from mainapp.services.userManagement import UserManagement
 from mainapp.objects.exceptions import DailyFavouriteNoUserFound
-from mainapp.objects.dtos import UserDTO
 
 
 USERNAME = "testuser"
@@ -33,24 +30,12 @@ class TestAuthentication:
 
     @pytest.fixture
     def simUser(self):
-        user = User.objects.create_user(username=USERNAME, password=PASSWORD)
-        dto = UserDTO(user.id, user.username, None, None, None)
-        DatabaseManagement(dto).get_or_create(dto, DTOEnum.USER)
-        return user
+        return User.objects.create_user(username=USERNAME, password=PASSWORD)
 
     # Tests
     def test_register(self, simRequest):
-        dto = UserDTO(None, "user1", None, None, None)
-        UserManagement(simRequest).register("user1", "password1", dto)
-        user = User.objects.get(username="user1")
-        user_dto = DatabaseManagement(dto).get(user.id, DTOEnum.USER)
-
-        assert user is not None
-        assert user.id is not None
-
-        assert type(user_dto) is UserDTO
-        assert user.id == user_dto.id
-        assert user.username == user_dto.username
+        UserManagement(simRequest).register("user1", "password1")
+        assert User.objects.filter(username="user1")
 
     def test_login(self, simRequest, simUser):
         UserManagement(simRequest).login(USERNAME, PASSWORD)
@@ -62,7 +47,6 @@ class TestAuthentication:
 
         user = UserManagement(simRequest).getCurrentUser()
         assert user is not None
-        assert type(user) is UserDTO
 
     @pytest.mark.parametrize(
         "username, password",

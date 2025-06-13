@@ -5,7 +5,7 @@ from datetime import datetime
 
 @dataclass
 class ModelDTO:
-    id: int | str | None
+    id: int | str
 
 
 @dataclass
@@ -24,7 +24,7 @@ class GroupDTO(ModelDTO):
 
     # settings
     is_public: bool
-    max_posts_per_day: int
+    max_posts_per_day: bool
     post_permission: str
     read_permission: str
 

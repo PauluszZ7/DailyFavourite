@@ -39,16 +39,16 @@ def favouritePage_view(request):
     context = {}
     return render(request, "favourites.html", context)
 
+
 def homepageFeed_view(request):
     json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
 
     with open(json_path, "r", encoding="utf-8") as f:
         posts_data = json.load(f)
 
-    context = {
-        "posts": posts_data
-    }
+    context = {"posts": posts_data}
     return render(request, "feeds/homepage_feed.html", context)
+
 
 def groupFeed_view(request):
     json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
@@ -56,10 +56,10 @@ def groupFeed_view(request):
     with open(json_path, "r", encoding="utf-8") as f:
         posts_data = json.load(f)
 
-    context = {
-        "posts": posts_data
-    }
+    context = {"posts": posts_data}
+    print("Groupfeed geladen")
     return render(request, "feeds/group_feed.html", context)
+
 
 def friendsFeed_view(request):
     json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
@@ -67,10 +67,9 @@ def friendsFeed_view(request):
     with open(json_path, "r", encoding="utf-8") as f:
         posts_data = json.load(f)
 
-    context = {
-        "posts": posts_data
-    }
+    context = {"posts": posts_data}
     return render(request, "feeds/friends_feed.html", context)
+
 
 # BACKEND
 def registration_view(request):
@@ -100,3 +99,7 @@ def login_view(request):
 def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
+
+
+def vote_view(request):
+    return JsonResponse("Du hast gevoted.")

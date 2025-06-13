@@ -1,7 +1,5 @@
 from typing import Any
 
-from mainapp.objects.dtos import ModelDTO
-
 
 class DailyFavouriteBaseException(Exception):
     """
@@ -41,22 +39,6 @@ class DailyFavouriteNoUserLoggedIn(DailyFavouriteBaseException):
         super().__init__(500, message, context)
 
 
-class DailyFavouriteMinimumRequiredParameter(DailyFavouriteBaseException):
-
-    def __init__(self, function_name, description) -> None:
-        message = "Function needs a minimum of given Parameters. See Details"
-        context = {"function_name": function_name, "description": description}
-        super().__init__(500, message, context)
-
-
-class DailyFavouriteAlreadyVotedForPost(DailyFavouriteBaseException):
-
-    def __init__(self):
-        message = "User has already voted for the post."
-        context = {}
-        super().__init__(500, message, context)
-
-
 class DailyFavouriteDBObjectNotFound(DailyFavouriteBaseException):
 
     def __init__(self, type, id) -> None:
@@ -70,24 +52,6 @@ class DailyFavouriteDBObjectCouldNotBeCreated(DailyFavouriteBaseException):
     def __init__(self, dto, baseException):
         message = "Database Object could not be created. See Details."
         context = {"DTO": dto, "Exception": baseException}
-        super().__init__(500, message, context)
-
-
-class DailyFavouriteDBAttributeNotFound(DailyFavouriteBaseException):
-
-    def __init__(self, type: ModelDTO, attribute: str) -> None:
-        message = (
-            "Database Object with matching Attribute could not be found. See Details."
-        )
-        context = {"type": type, "attribute": attribute}
-        super().__init__(404, message, context)
-
-
-class DailyFavouriteDBWrongObjectType(DailyFavouriteBaseException):
-
-    def __init__(self, requested_type, real_type):
-        message = "Database returned wrong unexpected object type. See Details"
-        context = {"expected": requested_type, "real": real_type}
         super().__init__(500, message, context)
 
 

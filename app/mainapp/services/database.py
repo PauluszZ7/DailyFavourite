@@ -1,16 +1,12 @@
 from mainapp.objects.dtos import ModelDTO
 from mainapp.objects.enums import DTOEnum
 from mainapp.objects.exceptions import (
-    DailyFavouriteDBAttributeNotFound,
     DailyFavouriteDBObjectCouldNotBeCreated,
     DailyFavouriteDBObjectNotFound,
 )
 
-from typing import Any, List
+from typing import Any
 from dataclasses import is_dataclass, fields
-from django.db import models
-
-import datetime
 
 
 class DatabaseManagement:
@@ -52,37 +48,6 @@ class DatabaseManagement:
             return obj
         except Exception as e:
             raise DailyFavouriteDBObjectCouldNotBeCreated(dto, e)
-
-    def list(
-        self, attribute_value: str | int, type: DTOEnum, filter_attr: str = "id"
-    ) -> List[ModelDTO]:
-        model_class = type.getModel()
-
-        field_names = [field.name for field in model_class._meta.get_fields()]
-        if (
-            filter_attr.split("_")[0] not in field_names
-            and filter_attr not in field_names
-        ):
-            raise DailyFavouriteDBAttributeNotFound(type.getDTO(), filter_attr)
-
-        field = model_class._meta.get_field(filter_attr)
-
-        # Spezial: Datetime wird nur nach Tag gefiltert.
-        if isinstance(field, models.DateTimeField):
-            if isinstance(attribute_value, datetime.datetime):
-                attribute_value = attribute_value.date()
-            queryset = model_class.objects.filter(
-                **{f"{filter_attr}__date": attribute_value}
-            )
-        else:
-            queryset = model_class.objects.filter(**{filter_attr: attribute_value})
-
-        if not queryset.exists():
-            raise DailyFavouriteDBObjectNotFound(type.getDTO(), id=0)
-
-        serialized = type.getSerializer()(queryset, many=True)
-        dtos = [type.getDTO()(**data) for data in serialized.data]
-        return dtos
 
     def delete(self, dto: ModelDTO, type: DTOEnum) -> None:
         type.getModel().objects.filter(id=dto.id).delete()
