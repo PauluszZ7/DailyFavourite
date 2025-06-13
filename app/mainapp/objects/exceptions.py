@@ -10,7 +10,7 @@ class DailyFavouriteBaseException(Exception):
     Attributes:
         status: Fehlerstatus der Exception
         message: Fehlermeldung als Klartext
-        context: Zusätslich wichtige Informationen zur Fehlerbehebung
+        context: Zusätzlich wichtige Informationen zur Fehlerbehebung
     """
 
     status: int
