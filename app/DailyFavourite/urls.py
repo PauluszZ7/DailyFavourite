@@ -24,9 +24,13 @@ from mainapp.views import (
     mainfeedPage_view,
     profilePage_view,
     favouritePage_view,
+    homepageFeed_view,
+    groupFeed_view,
+    friendsFeed_view,
     login_view,
     registration_view,
     logout_view,
+    vote_view,
 )
 
 urlpatterns = [
@@ -37,7 +41,11 @@ urlpatterns = [
     path("mainfeed/", mainfeedPage_view, name="mainfeed"),
     path("profile/", profilePage_view, name="profile"),
     path("favourites/", favouritePage_view, name="favourite"),
+    path("homepage/", homepageFeed_view, name="homepage"),
+    path("groupfeed/", groupFeed_view, name="groupfeed"),
+    path("friendsfeed/", friendsFeed_view, name="friendsfeed"),
     path("api/login/", login_view, name="backend-login"),
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
+    path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
 ]

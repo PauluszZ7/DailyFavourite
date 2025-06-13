@@ -1,4 +1,5 @@
 import json
+import os
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
@@ -39,6 +40,36 @@ def favouritePage_view(request):
     return render(request, "favourites.html", context)
 
 
+def homepageFeed_view(request):
+    json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        posts_data = json.load(f)
+
+    context = {"posts": posts_data}
+    return render(request, "feeds/homepage_feed.html", context)
+
+
+def groupFeed_view(request):
+    json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        posts_data = json.load(f)
+
+    context = {"posts": posts_data}
+    return render(request, "feeds/group_feed.html", context)
+
+
+def friendsFeed_view(request):
+    json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        posts_data = json.load(f)
+
+    context = {"posts": posts_data}
+    return render(request, "feeds/friends_feed.html", context)
+
+
 # BACKEND
 def registration_view(request):
     if request.method == "POST":
@@ -67,3 +98,6 @@ def login_view(request):
 def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
+
+def vote_view(request):
+    return JsonResponse("Du hast gevoted.")
