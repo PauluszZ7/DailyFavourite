@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 from datetime import datetime
 
 from mainapp.objects.exceptions import (
@@ -20,44 +20,11 @@ class GroupManagement:
 
     def getGroup(self, id: int) -> GroupDTO:
         obj = DatabaseManagement(self.user).get(id, DTOEnum.GROUP)
-        if isinstance(obj, GroupDTO):
+        if not obj.is_public and not self.userIsMemberOfGroup(obj):
+            raise PermissionError("Access denied to private group.")
+        if type(obj) is GroupDTO:
             return obj
         raise DailyFavouriteDBWrongObjectType(GroupDTO, type(obj))
-
-    def createGroup(self, group: GroupDTO) -> None:
-        DatabaseManagement(self.user).get_or_create(group, DTOEnum.GROUP)
-        membership = MembershipDTO(None, self.user, group)
-        DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
-
-    def updateGroup(self, group: GroupDTO) -> None:
-        DatabaseManagement(self.user).create_or_update(group, DTOEnum.GROUP)
-
-    def deleteGroup(self, group: GroupDTO) -> None:
-        DatabaseManagement(self.user).delete(group, DTOEnum.GROUP)
-
-    def joinGroup(self, group: GroupDTO) -> None:
-        try:
-            memberships = DatabaseManagement(self.user).list(group.id, DTOEnum.MEMBERSHIP, "group_id")
-        except DailyFavouriteDBObjectNotFound:
-            memberships = []
-
-        for m in memberships:
-            if isinstance(m, MembershipDTO) and m.user.id == self.user.id:
-                return  
-
-        membership = MembershipDTO(None, self.user, group)
-        DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
-
-    def leaveGroup(self, group: GroupDTO) -> None:
-        try:
-            memberships = DatabaseManagement(self.user).list(group.id, DTOEnum.MEMBERSHIP, "group_id")
-        except DailyFavouriteDBObjectNotFound:
-            return
-
-        for m in memberships:
-            if isinstance(m, MembershipDTO) and m.user.id == self.user.id:
-                DatabaseManagement(self.user).delete(m, DTOEnum.MEMBERSHIP)
-                return
 
     def listGroups(self) -> List[GroupDTO]:
         try:
@@ -67,61 +34,162 @@ class GroupManagement:
 
     def listGroupsWhereUserIsMember(self) -> List[GroupDTO]:
         try:
-            memberships = DatabaseManagement(self.user).list(self.user.id, DTOEnum.MEMBERSHIP, "user_id")
+            memberships = DatabaseManagement(self.user).list(
+                self.user.id, DTOEnum.MEMBERSHIP, "user_id"
+            )
         except DailyFavouriteDBObjectNotFound:
             return []
 
         groups = []
-        for membership in memberships:
-            if not isinstance(membership, MembershipDTO):
-                raise DailyFavouriteDBWrongObjectType(MembershipDTO, type(membership))
-            groups.append(membership.group)
+        for m in memberships:
+            if type(m) is not MembershipDTO:
+                raise DailyFavouriteDBWrongObjectType(MembershipDTO, type(m))
+            groups.append(m.group)
         return groups
 
-    def getMembers(self, group: GroupDTO) -> List[UserDTO]:
+    def createGroup(self, group: GroupDTO) -> None:
+        group.admin = self.user
+        DatabaseManagement(self.user).get_or_create(group, DTOEnum.GROUP)
+        membership = MembershipDTO(None, self.user, group)
+        DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
+
+    def updateGroup(self, group: GroupDTO) -> None:
+        if group.admin.id != self.user.id:
+            raise PermissionError("User not authorized to update group.")
+        DatabaseManagement(self.user).create_or_update(group, DTOEnum.GROUP)
+
+    def deleteGroup(self, group: GroupDTO) -> None:
+        if group.admin.id != self.user.id:
+            raise PermissionError("User not authorized to delete group.")
+
         try:
-            memberships = DatabaseManagement(self.user).list(group.id, DTOEnum.MEMBERSHIP, "group_id")
+            memberships = DatabaseManagement(self.user).list(
+                group.id, DTOEnum.MEMBERSHIP, "group_id"
+            )
+            for m in memberships:
+                DatabaseManagement(self.user).delete(m, DTOEnum.MEMBERSHIP)
         except DailyFavouriteDBObjectNotFound:
-            return []
+            pass
 
-        users = []
-        for membership in memberships:
-            if not isinstance(membership, MembershipDTO):
-                raise DailyFavouriteDBWrongObjectType(MembershipDTO, type(membership))
-            users.append(membership.user)
-        return users
-
-    def userIsMemberOfGroup(self, group: GroupDTO, user: UserDTO) -> bool:
         try:
-            memberships = DatabaseManagement(self.user).list(group.id, DTOEnum.MEMBERSHIP, "group_id")
+            posts = DatabaseManagement(self.user).list(
+                group.id, DTOEnum.POST, "group_id"
+            )
+            for p in posts:
+                DatabaseManagement(self.user).delete(p, DTOEnum.POST)
         except DailyFavouriteDBObjectNotFound:
-            return False
+            pass
 
-        return any(
-            isinstance(m, MembershipDTO) and m.user.id == user.id for m in memberships
-        )
+        DatabaseManagement(self.user).delete(group, DTOEnum.GROUP)
 
-    def removeUserFromGroup(self, group: GroupDTO, user: UserDTO) -> None:
+    def joinGroup(self, group: GroupDTO, password: str | None = None) -> None:
+        if not group.is_public and group.password and group.password != password:
+            raise PermissionError("Incorrect password.")
+
         try:
-            memberships = DatabaseManagement(self.user).list(group.id, DTOEnum.MEMBERSHIP, "group_id")
+            memberships = DatabaseManagement(self.user).list(
+                group.id, DTOEnum.MEMBERSHIP, "group_id"
+            )
+        except DailyFavouriteDBObjectNotFound:
+            memberships = []
+
+        for m in memberships:
+            if type(m) is MembershipDTO and m.user.id == self.user.id:
+                return
+
+        membership = MembershipDTO(None, self.user, group)
+        DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
+
+    def leaveGroup(self, group: GroupDTO) -> None:
+        try:
+            memberships = DatabaseManagement(self.user).list(
+                group.id, DTOEnum.MEMBERSHIP, "group_id"
+            )
         except DailyFavouriteDBObjectNotFound:
             return
 
         for m in memberships:
-            if isinstance(m, MembershipDTO) and m.user.id == user.id:
+            if type(m) is MembershipDTO and m.user.id == self.user.id:
                 DatabaseManagement(self.user).delete(m, DTOEnum.MEMBERSHIP)
                 return
 
-    def getProfilePicture(self, group: GroupDTO) -> str:
-        if group.image_url:
-            return group.image_url
-        return "https://example.com/default-group-image.png"
+    def getMembers(self, group: GroupDTO) -> List[UserDTO]:
+        if not group.is_public and not self.userIsMemberOfGroup(group):
+            raise PermissionError("Access denied to private group members.")
+
+        try:
+            memberships = DatabaseManagement(self.user).list(
+                group.id, DTOEnum.MEMBERSHIP, "group_id"
+            )
+        except DailyFavouriteDBObjectNotFound:
+            return []
+
+        users = []
+        for m in memberships:
+            if type(m) is not MembershipDTO:
+                raise DailyFavouriteDBWrongObjectType(MembershipDTO, type(m))
+            users.append(m.user)
+        return users
+
+    def userIsMemberOfGroup(self, group: GroupDTO, user: UserDTO | None = None) -> bool:
+        if user is None:
+            user = self.user
+
+        try:
+            memberships = DatabaseManagement(self.user).list(
+                group.id, DTOEnum.MEMBERSHIP, "group_id"
+            )
+        except DailyFavouriteDBObjectNotFound:
+            return False
+
+        return any(
+            type(m) is MembershipDTO and m.user.id == user.id for m in memberships
+        )
+
+    def removeUserFromGroup(self, group: GroupDTO, user: UserDTO) -> None:
+        try:
+            memberships = DatabaseManagement(self.user).list(
+                group.id, DTOEnum.MEMBERSHIP, "group_id"
+            )
+        except DailyFavouriteDBObjectNotFound:
+            return
+
+        for m in memberships:
+            if type(m) is MembershipDTO and m.user.id == user.id:
+                DatabaseManagement(self.user).delete(m, DTOEnum.MEMBERSHIP)
+                return
 
     def createPost(self, post: PostDTO) -> None:
+        if (
+            post.group.post_permission == "admin"
+            and post.group.admin.id != self.user.id
+        ):
+            raise PermissionError("Post permission denied.")
         PostManagement(self.user).createPost(post)
 
     def deletePost(self, post: PostDTO) -> None:
+        if post.user.id != self.user.id and post.group.admin.id != self.user.id:
+            raise PermissionError("Delete permission denied.")
         PostManagement(self.user).deletePost(post)
 
-    def checkUserHasPermission(self, group: GroupDTO) -> bool:
-        return self.userIsMemberOfGroup(group, self.user)
+    def createPrivateArchiveGroupIfNotExists(self) -> None:
+        name = f"@{self.user.username} (privat)"
+        try:
+            groups = DatabaseManagement(self.user).list(name, DTOEnum.GROUP, "name")
+            for g in groups:
+                if not g.is_public and g.admin.id == self.user.id:
+                    return
+        except DailyFavouriteDBObjectNotFound:
+            pass
+
+        archive = GroupDTO(
+            id=None,
+            name=name,
+            description="Private archive",
+            is_public=False,
+            admin=self.user,
+            max_posts_per_day=9999,
+            post_permission="admin",
+            read_permission="admin",
+        )
+        self.createGroup(archive)
