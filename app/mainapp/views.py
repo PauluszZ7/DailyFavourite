@@ -101,3 +101,7 @@ def logout_view(request):
 
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
+
+
+def friendsPage_view(request):
+    return render(request, "friends.html")
