@@ -1,24 +1,19 @@
-from django.contrib.auth.models import User
 from mainapp.objects.enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
 from mainapp.objects.dtos import ModelDTO
+
 from django.db import models
+
 import pytest
 from dataclasses import fields
+
 from mainapp.tests.helpers import TEST_DATE, create_dummy_instance
 
 
 @pytest.mark.django_db
 class TestDatabase:
-    @pytest.fixture(autouse=True)
-    def setup_users(self):
-        # Create a test user that will be used across all tests
-        self.user = User.objects.create_user(
-            username='testuser',
-            password='testpass123'
-        )
-        self.USER_ID = self.user.id  # Use dynamic ID instead of hardcoded
+    USER_ID = 12345
 
     @pytest.mark.parametrize(
         "dto_type",
@@ -35,37 +30,31 @@ class TestDatabase:
         """
         Tests create_or_get and create_or_update too
         """
-        # Create test object with proper relationships
-        test_object = create_dummy_instance(dto_type.getDTO())
+        object_id = 1234
+        dto = dto_type.getDTO()
 
-        # For User DTO, ensure it uses our test user
-        if dto_type == DTOEnum.USER:
-            test_object.id = self.user.id
-            test_object.username = self.user.username
+        test_object = create_dummy_instance(dto)
+        test_object.id = object_id
 
         dbm = DatabaseManagement(self.USER_ID)
+        dbm.create_or_update(test_object, dto_type)
+        test_dto = dbm.get(id=test_object.id, type=dto_type)
 
-        # Create/update
-        created_dto = dbm.create_or_update(test_object, dto_type)
+        assert test_dto is not None
+        assert type(test_dto) is dto
+        if dto_type == DTOEnum.MUSIC:
+            assert test_dto.id == str(object_id)
+        else:
+            assert test_dto.id == object_id
 
-        # Verify creation
-        assert created_dto is not None
-        assert isinstance(created_dto, dto_type.getDTO())
+        for f in fields(test_dto):
+            assert f is not None
 
-        # Verify get
-        fetched_dto = dbm.get(id=created_dto.id, type=dto_type)
-        assert fetched_dto is not None
+        # delete
+        dbm.delete(test_dto, dto_type)
 
-        # Verify fields
-        for field in fields(fetched_dto):
-            assert getattr(fetched_dto, field.name) is not None
-
-        # Test deletion
-        dbm.delete(fetched_dto, dto_type)
-
-        # Verify deletion
         with pytest.raises(DailyFavouriteDBObjectNotFound):
-            dbm.get(id=created_dto.id, type=dto_type)
+            dbm.get(id=test_object.id, type=dto_type)
 
     @pytest.mark.parametrize(
         "dto_type",
@@ -82,43 +71,41 @@ class TestDatabase:
         """
         Tests list of DTO Objects
         """
+        object_id = 1234
+        dto = dto_type.getDTO()
+
+        test_object = create_dummy_instance(dto)
+        test_object.id = object_id
+
         dbm = DatabaseManagement(self.USER_ID)
+        dbm.get_or_create(test_object, dto_type)
 
-        # Create two test instances
-        instance1 = create_dummy_instance(dto_type.getDTO())
-        instance2 = create_dummy_instance(dto_type.getDTO())
-
-        # For User DTO, use our test user
-        if dto_type == DTOEnum.USER:
-            instance1.id = self.user.id
-            instance2.id = self.user.id + 1  # Different ID
-
-        dbm.create_or_update(instance1, dto_type)
-        dbm.create_or_update(instance2, dto_type)
-
-        # Get field to filter by
-        fieldname, value = get_first_test_field_and_value(instance1)
-
-        # Special case for Vote - needs different users
+        test_object.id += 1
+        # Spezialfall VOTE: User und Music nicht doppelt.
         if dto_type == DTOEnum.VOTE:
-            fieldname = "user"
-            value = self.user.id
+            test_object.user.id += 1
+        dbm.get_or_create(test_object, dto_type)
 
-        results = dbm.list(value, dto_type, fieldname)
+        fieldname, value = get_first_test_field_and_value(test_object)
+        dto_objects = dbm.list(value, dto_type, fieldname)
 
-        # Verify results
-        assert len(results) >= 1  # At least one should match
-        assert all(isinstance(r, dto_type.getDTO()) for r in results)
+        assert len(dto_objects) == 2
+        assert type(dto_objects[0]) is dto_type.getDTO()
+        assert type(dto_objects[1]) is dto_type.getDTO()
+
+        assert dto_objects[0].id == object_id or dto_objects[0].id == str(object_id)
+        assert dto_objects[1].id == object_id + 1 or dto_objects[1].id == str(
+            object_id + 1
+        )
 
 
+# Helpers
 def get_first_test_field_and_value(dto: ModelDTO):
     model_class = DTOEnum.fromDTO(dto).getModel()
 
     for field in model_class._meta.fields:
         if field.name == "id":
             continue
-        if isinstance(field, models.ForeignKey):
-            return field.name, 1  # Default to ID 1 for foreign keys
         if isinstance(field, models.CharField):
             return field.name, "test"
         if isinstance(field, models.IntegerField):

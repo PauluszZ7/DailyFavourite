@@ -1,4 +1,4 @@
-from mainapp.objects.dtos import ModelDTO, UserDTO
+from mainapp.objects.dtos import ModelDTO
 from mainapp.objects.enums import DTOEnum
 from mainapp.objects.exceptions import (
     DailyFavouriteDBAttributeNotFound,
@@ -23,32 +23,18 @@ class DatabaseManagement:
         """
         Does NOT update inner dtos (Foreign Keys).
         """
-        model_class = type.getModel()
-        defaults = self._dto_to_defaults(dto)
-
-        # Lookup für UserMeta anders
-        if model_class.__name__ == "UserMeta":
-            lookup_kwargs = {'user_id': dto.id}  # dto.id ist hier die User.id
-        else:
-            lookup_kwargs = {'id': dto.id}
-
         try:
-            obj, created = model_class.objects.update_or_create(defaults=defaults, **lookup_kwargs)
+            model = type.getModel()
+            defaults = self._dto_to_defaults(dto)
+
+            obj, created = model.objects.update_or_create(id=dto.id, defaults=defaults)
             return obj
         except Exception as e:
             raise DailyFavouriteDBObjectCouldNotBeCreated(dto, e)
 
     def get(self, id: str | int, type: DTOEnum) -> ModelDTO:
-        model_class = type.getModel()
-
-        # Lookup für UserMeta anders
-        if model_class.__name__ == "UserMeta":
-            lookup_kwargs = {'user_id': id}
-        else:
-            lookup_kwargs = {'id': id}
-
         try:
-            model = model_class.objects.get(**lookup_kwargs)
+            model = type.getModel().objects.get(id=id)
         except Exception:
             raise DailyFavouriteDBObjectNotFound(type, id)
 
@@ -58,16 +44,11 @@ class DatabaseManagement:
         return dto(**serializer.data)
 
     def get_or_create(self, dto: ModelDTO, type: DTOEnum) -> Any:
-        model_class = type.getModel()
-        defaults = self._dto_to_defaults(dto)
-
-        if model_class.__name__ == "UserMeta":
-            lookup_kwargs = {'user_id': dto.id}
-        else:
-            lookup_kwargs = {'id': dto.id}
-
         try:
-            obj, created = model_class.objects.get_or_create(defaults=defaults, **lookup_kwargs)
+            model = type.getModel()
+            defaults = self._dto_to_defaults(dto)
+
+            obj, created = model.objects.get_or_create(id=dto.id, defaults=defaults)
             return obj
         except Exception as e:
             raise DailyFavouriteDBObjectCouldNotBeCreated(dto, e)
@@ -104,30 +85,18 @@ class DatabaseManagement:
         return dtos
 
     def delete(self, dto: ModelDTO, type: DTOEnum) -> None:
-        model_class = type.getModel()
-
-        if model_class.__name__ == "UserMeta":
-            model_class.objects.filter(user_id=dto.id).delete()
-        else:
-            model_class.objects.filter(id=dto.id).delete()
+        type.getModel().objects.filter(id=dto.id).delete()
 
     # Helpers
     def _dto_to_defaults(self, dto: ModelDTO) -> dict:
-        if isinstance(dto, UserDTO):
-            return {
-                'profile_picture': dto.profile_picture,
-                'favorite_artist': dto.favorite_artist,
-                'favorite_genre': dto.favorite_genre,
-            }
-
-        # Generischer Code für andere DTOs
         defaults = {}
         for field in fields(dto):
             value = getattr(dto, field.name)
+
             if is_dataclass(value):
+                # Rekursiv abspeichern, bevor wir's einsetzen
                 inner_model = self.get_or_create(value, DTOEnum.fromDTO(value))
                 defaults[field.name] = inner_model
             else:
                 defaults[field.name] = value
         return defaults
-
