@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load form_tags %}
+
+{% block title %}Gruppeneinstellungen{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Gruppeneinstellungen</h2>
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="mb-3">
+      {{ form.name.label_tag }}
+      {{ form.name|add_class:"form-control" }}
+      {{ form.name.errors }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.description.label_tag }}
+      {{ form.description|add_class:"form-control" }}
+      {{ form.description.errors }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.profile_image.label_tag }}
+      <div id="imagePreview"
+           class="rounded-circle bg-light mb-2 d-flex align-items-center justify-content-center"
+           style="width: 120px; height: 120px; background-size: cover; background-position: center; cursor: pointer;">
+        <span id="uploadIcon" class="fs-1 text-secondary m-0">+</span>
+      </div>
+      {{ form.profile_image|add_class:"form-control d-none" }}
+      {{ form.profile_image.errors }}
+    </div>
+
+    <div class="mb-3">
+      {{ form.genre.label_tag }}
+      {{ form.genre|add_class:"form-select" }}
+      {{ form.genre.errors }}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Sichtbarkeit</label>
+      <div class="btn-group" role="group" aria-label="Sichtbarkeit">
+        <input type="radio" class="btn-check" name="is_public" id="publicToggle" value="True"
+               autocomplete="off" {% if form.initial.is_public %}checked{% endif %}>
+        <label class="btn btn-outline-primary" for="publicToggle">Öffentlich</label>
+        <input type="radio" class="btn-check" name="is_public" id="privateToggle" value="False"
+               autocomplete="off" {% if not form.initial.is_public %}checked{% endif %}>
+        <label class="btn btn-outline-primary" for="privateToggle">Privat</label>
+      </div>
+    </div>
+
+    <!-- Neue Felder -->
+    <div class="mb-3">
+      {{ form.max_posts_per_day.label_tag }}
+      {{ form.max_posts_per_day|add_class:"form-control" }}
+      {{ form.max_posts_per_day.errors }}
+      <small class="text-muted">Maximale Anzahl an Posts, die ein Mitglied pro Tag erstellen darf</small>
+    </div>
+
+    <div class="mb-3">
+      {{ form.post_permission.label_tag }}
+      {{ form.post_permission|add_class:"form-select" }}
+      {{ form.post_permission.errors }}
+      <small class="text-muted">Wer darf Posts in dieser Gruppe erstellen?</small>
+    </div>
+
+    <div class="mb-3">
+      {{ form.read_permission.label_tag }}
+      {{ form.read_permission|add_class:"form-select" }}
+      {{ form.read_permission.errors }}
+      <small class="text-muted">Wer darf die Posts in dieser Gruppe lesen?</small>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+    </div>
+
+    <div class="text-end mt-4">
+      <button
+        type="button"
+        class="btn btn-danger"
+        data-bs-toggle="modal"
+        data-bs-target="#deleteModal">
+        Gruppe löschen
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Gruppe wirklich löschen?</h5>
+      </div>
+      <div class="modal-body">
+        <p>Diese Aktion kann nicht rückgängig gemacht werden!</p>
+        <p class="text-muted">Alle Gruppen-Daten gehen verloren.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+        <form method="POST" action="{% url 'delete_group' form.instance.id %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Endgültig löschen</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const imageInput = document.getElementById('{{ form.profile_image.id_for_label }}');
+  const preview = document.getElementById('imagePreview');
+  const uploadIcon = document.getElementById('uploadIcon');
+
+  preview.addEventListener('click', () => {
+    imageInput.click();
+  });
+
+  imageInput.addEventListener('change', function () {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        preview.style.backgroundImage = `url(${e.target.result})`;
+        uploadIcon.style.display = "none";
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+{% endblock %}

@@ -3,6 +3,9 @@ from mainapp.models import UserMeta, Group, Membership, Music, Post, Comment, Vo
 
 
 class UserSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(source="user.id", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
+
     class Meta:
         model = UserMeta
         fields = [

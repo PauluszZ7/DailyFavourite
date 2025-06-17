@@ -17,6 +17,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from mainapp.views import (
     mainPage_view,
     loginPage_view,
@@ -31,6 +33,10 @@ from mainapp.views import (
     registration_view,
     logout_view,
     vote_view,
+    group_view,
+    my_groups_view,
+    group_edit_view,
+    delete_group,
 )
 
 urlpatterns = [
@@ -48,4 +54,11 @@ urlpatterns = [
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
     path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
+    path('groups/create/', group_view, name='group-create'),
+    path('groups/', my_groups_view, name='my-groups'),
+    path('groups/<int:group_id>/edit/', group_edit_view, name='group-edit'),
+    path('group/<int:group_id>/delete/', delete_group, name='delete_group'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

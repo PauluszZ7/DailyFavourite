@@ -1,10 +1,13 @@
 import json
 import os
 from django.http import JsonResponse
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.urls import reverse
 from mainapp.services.userManagement import UserManagement
+from django.urls import reverse
+from .forms import GroupForm
+from .models import Group, UserMeta
+from django.contrib import messages
 
 
 # FRONTEND
@@ -101,3 +104,58 @@ def logout_view(request):
 
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
+
+@login_required(login_url='/login/')
+def group_view(request):
+    if request.method == "POST":
+        form = GroupForm(request.POST, request.FILES)
+        if form.is_valid():
+            user_meta = UserMeta.objects.get(user=request.user)
+            new_group = form.save(commit=False)
+            new_group.owner = user_meta
+            new_group.save()
+            new_group.members.add(user_meta)
+            return redirect('my-groups')
+    else:
+        form = GroupForm()
+
+    return render(request, "create_group.html", {"form": form})
+
+
+@login_required(login_url='/login/')
+def my_groups_view(request):
+    user_meta = UserMeta.objects.get(user=request.user)
+    groups = Group.objects.filter(members=user_meta)
+    return render(request, "my_groups.html", {"groups": groups})
+
+
+@login_required(login_url='/login/')
+def group_edit_view(request, group_id):
+    group = get_object_or_404(Group, id=group_id)
+    user_meta = UserMeta.objects.get(user=request.user)
+
+    if user_meta != group.owner:
+        return redirect('my-groups')
+
+    if request.method == 'POST':
+        form = GroupForm(request.POST, request.FILES, instance=group)
+        if form.is_valid():
+            form.save()
+            return redirect('my-groups')
+    else:
+        form = GroupForm(instance=group)
+
+    return render(request, 'group_edit.html', {'form': form, 'group': group})
+
+
+@login_required(login_url='/login/')
+def delete_group(request, group_id):
+    user_meta = UserMeta.objects.get(user=request.user)
+    group = get_object_or_404(Group, id=group_id, owner=user_meta)
+
+    if request.method == 'POST':
+        group.delete()
+        messages.success(request, 'Gruppe wurde gelöscht!')
+        return redirect('my-groups')
+
+    return redirect('group_settings')
