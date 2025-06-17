@@ -9,6 +9,7 @@ from mainapp.objects.exceptions import (
 from typing import Any, List
 from dataclasses import is_dataclass, fields
 from django.db import models
+from .models import UserDTO
 
 import datetime
 
@@ -113,14 +114,21 @@ class DatabaseManagement:
 
     # Helpers
     def _dto_to_defaults(self, dto: ModelDTO) -> dict:
+        if isinstance(dto, UserDTO):
+            return {
+                'profile_picture': dto.profile_picture,
+                'favorite_artist': dto.favorite_artist,
+                'favorite_genre': dto.favorite_genre,
+            }
+
+        # Generischer Code für andere DTOs
         defaults = {}
         for field in fields(dto):
             value = getattr(dto, field.name)
-
             if is_dataclass(value):
-                # Rekursiv abspeichern, bevor wir's einsetzen
                 inner_model = self.get_or_create(value, DTOEnum.fromDTO(value))
                 defaults[field.name] = inner_model
             else:
                 defaults[field.name] = value
         return defaults
+

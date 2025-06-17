@@ -65,10 +65,12 @@ class DailyFavouriteDBObjectNotFound(DailyFavouriteBaseException):
         super().__init__(404, message, context)
 
 
-class DailyFavouriteDBObjectCouldNotBeCreated(Exception):
-    def __init__(self, dto, original_exception):
-        super().__init__(f"Database Object could not be created for DTO {dto}. Original error: {original_exception}")
+class DailyFavouriteDBObjectCouldNotBeCreated(DailyFavouriteBaseException):
 
+    def __init__(self, dto, baseException):
+        message = "Database Object could not be created. See Details."
+        context = {"DTO": dto, "Exception": baseException}
+        super().__init__(500, message, context)
 
 
 class DailyFavouriteDBAttributeNotFound(DailyFavouriteBaseException):
