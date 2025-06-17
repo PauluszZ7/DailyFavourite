@@ -1,4 +1,4 @@
-from mainapp.objects.dtos import ModelDTO
+from mainapp.objects.dtos import ModelDTO, UserDTO
 from mainapp.objects.enums import DTOEnum
 from mainapp.objects.exceptions import (
     DailyFavouriteDBAttributeNotFound,
@@ -9,7 +9,6 @@ from mainapp.objects.exceptions import (
 from typing import Any, List
 from dataclasses import is_dataclass, fields
 from django.db import models
-from .models import UserDTO
 
 import datetime
 
