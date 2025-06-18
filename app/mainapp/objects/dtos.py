@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any
 from datetime import datetime
-
+from enum import Enum
 
 @dataclass
 class ModelDTO:
@@ -21,13 +21,13 @@ class GroupDTO(ModelDTO):
     name: str
     created_at: datetime
     description: str
-
-    # settings
+    profile_image: Any
+    genre: str | None
     is_public: bool
     max_posts_per_day: int
     post_permission: str
     read_permission: str
-
+    admin: UserDTO
 
 @dataclass
 class MusicDTO(ModelDTO):
@@ -61,3 +61,24 @@ class VoteDTO(ModelDTO):
     user: UserDTO
     post: PostDTO
     is_upvote: bool
+
+@dataclass
+class MembershipDTO(ModelDTO):
+    user: UserDTO
+    group: GroupDTO
+    role: str
+
+    def __post_init__(self):
+        self.role = RoleEnum.validate(self.role)
+
+class RoleEnum(str, Enum):
+    OWNER = "owner"
+    MODERATOR = "moderator"
+    MEMBER = "member"
+    ARCHIVE_VIEWER = "archive_viewer"
+
+    @classmethod
+    def validate(cls, role: str) -> str:
+        if role not in cls._value2member_map_:
+            raise ValueError(f"Invalid role: {role}")
+        return role

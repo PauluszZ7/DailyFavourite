@@ -46,6 +46,14 @@ class Membership(models.Model):
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
 
+    ROLE_CHOICES = [
+        ("owner", "Owner"),
+        ("moderator", "Moderator"),
+        ("member", "Member"),
+        ("archive_viewer", "Archive Viewer"),
+    ]
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default="member")
+
     class Meta:
         unique_together = ("user", "group")
 
