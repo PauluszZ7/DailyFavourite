@@ -69,6 +69,22 @@ def friendsFeed_view(request):
     context = {"posts": posts_data}
     return render(request, "feeds/friends_feed.html", context)
 
+@login_required
+def profilePage_view(request):
+    user = UserManagement(request).getCurrentUser()
+
+    json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
+    with open(json_path, "r", encoding="utf-8") as f:
+        posts_data = json.load(f)
+
+    user_posts = [post for post in posts_data if post["user"]["id"] == user.id]
+
+    context = {
+        "user": user,
+        "user_posts": user_posts
+    }
+    return render(request, "profile.html", context)
+
 
 # BACKEND
 def registration_view(request):

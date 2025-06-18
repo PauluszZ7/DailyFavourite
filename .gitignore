@@ -174,3 +174,7 @@ cython_debug/
 .pypirc
 
 .env.local
+
+
+
+YOLOv8_dataset/
