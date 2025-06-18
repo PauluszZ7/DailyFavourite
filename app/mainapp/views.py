@@ -30,11 +30,6 @@ def mainfeedPage_view(request):
     return render(request, "mainfeed.html", context)
 
 
-def profilePage_view(request):
-    context = {}
-    return render(request, "profile.html", context)
-
-
 def favouritePage_view(request):
     context = {}
     return render(request, "favourites.html", context)
