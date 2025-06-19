@@ -26,7 +26,7 @@ from mainapp.views import (
     favouritePage_view,
     friendsPage_view,
     homepageFeed_view,
-    createPostPage_view
+    createPostPage_view,
     groupFeed_view,
     friendsFeed_view,
     login_view,
