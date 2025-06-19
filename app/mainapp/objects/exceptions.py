@@ -57,6 +57,14 @@ class DailyFavouriteAlreadyVotedForPost(DailyFavouriteBaseException):
         super().__init__(500, message, context)
 
 
+class DailyFavouriteAlredyFriends(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "Requested User and Friend are already friends."
+        context = {}
+        super().__init__(500, message, context)
+
+
 class DailyFavouriteDBObjectNotFound(DailyFavouriteBaseException):
 
     def __init__(self, type, id) -> None:

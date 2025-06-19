@@ -51,6 +51,7 @@ class DatabaseManagement:
             obj, created = model.objects.get_or_create(id=dto.id, defaults=defaults)
             return obj
         except Exception as e:
+            print(e)
             raise DailyFavouriteDBObjectCouldNotBeCreated(dto, e)
 
     def list(

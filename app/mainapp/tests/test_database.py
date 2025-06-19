@@ -1,7 +1,7 @@
 from mainapp.objects.enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
-from mainapp.objects.dtos import ModelDTO
+from mainapp.objects.dtos import ModelDTO, UserDTO
 
 from django.db import models
 
@@ -24,6 +24,7 @@ class TestDatabase:
             DTOEnum.COMMENT,
             DTOEnum.POST,
             DTOEnum.VOTE,
+            DTOEnum.FRIEND,
         ],
     )
     def test_create_get_delete(self, dto_type: DTOEnum):
@@ -65,6 +66,7 @@ class TestDatabase:
             DTOEnum.COMMENT,
             DTOEnum.POST,
             DTOEnum.VOTE,
+            DTOEnum.FRIEND,
         ],
     )
     def test_list(self, dto_type: DTOEnum):
@@ -84,6 +86,9 @@ class TestDatabase:
         # Spezialfall VOTE: User und Music nicht doppelt.
         if dto_type == DTOEnum.VOTE:
             test_object.user.id += 1
+        # Spezialfall Friend (keine zwei User mit gleichen Username)
+        if dto_type == DTOEnum.FRIEND and isinstance(test_object, UserDTO):
+            test_object.username = "EinAndererTestUser"
         dbm.get_or_create(test_object, dto_type)
 
         fieldname, value = get_first_test_field_and_value(test_object)

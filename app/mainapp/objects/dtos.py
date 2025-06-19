@@ -61,3 +61,9 @@ class VoteDTO(ModelDTO):
     user: UserDTO
     post: PostDTO
     is_upvote: bool
+
+
+@dataclass
+class FriendsCombinationDTO(ModelDTO):
+    baseUser: UserDTO
+    friend: UserDTO

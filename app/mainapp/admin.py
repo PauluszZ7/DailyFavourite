@@ -1,8 +1,9 @@
 from django.contrib import admin
-from mainapp.models import Membership, UserMeta, Group, Post, Vote, Music, Comment
+from mainapp.models import Membership, UserMeta, Group, Post, Vote, Music, Comment, FriendsCombinations
 
 # Register your models here.
 admin.site.register(Membership)
+admin.site.register(FriendsCombinations)
 admin.site.register(UserMeta)
 admin.site.register(Group)
 admin.site.register(Post)
