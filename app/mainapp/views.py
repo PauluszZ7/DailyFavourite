@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from mainapp.services.userManagement import UserManagement
+from django.views.decorators.csrf import csrf_exempt
 
 
 # FRONTEND
@@ -80,6 +81,35 @@ def profilePage_view(request):
     }
     return render(request, "profile.html", context)
 
+@csrf_exempt  # (temporär CSRF-Schutz deaktiviert – nur für Debugging-Zwecke)
+def createPostPage_view(request):
+    # Lade JSON-Daten aus der Datei
+    json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
+    with open(json_path, "r", encoding="utf-8") as f:
+        posts_data = json.load(f)
+
+    # Extrahiere eindeutige Gruppen und Musikstücke aus den Posts
+    groups = {post["group"]["id"]: post["group"] for post in posts_data}
+    musics = {post["music"]["id"]: post["music"] for post in posts_data}
+
+    if request.method == "POST":
+        try:
+            # JSON-Daten aus dem Request-Body lesen
+            data = json.loads(request.body)
+            group_id = data.get("group_id")
+            music_id = data.get("music_id")
+            print("Empfangene Daten:", group_id, music_id)
+
+            # Erfolgsmeldung zurückgeben
+            return JsonResponse({"success": True})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+    # Bei GET einfach das Template anzeigen
+    return render(request, "create_post.html", {
+        "groups": groups.values(),
+        "musics": musics.values(),
+    })
 
 # BACKEND
 def registration_view(request):
