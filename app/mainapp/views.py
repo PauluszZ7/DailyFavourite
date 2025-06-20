@@ -1,11 +1,14 @@
 import json
 import os
+
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-from mainapp.services.userManagement import UserManagement
 from django.views.decorators.csrf import csrf_exempt
+
+from mainapp.services.userManagement import UserManagement
+from mainapp.services.spotifyConnector import SpotifyConnector
 
 
 # FRONTEND
@@ -65,6 +68,7 @@ def friendsFeed_view(request):
     context = {"posts": posts_data}
     return render(request, "feeds/friends_feed.html", context)
 
+
 @login_required
 def profilePage_view(request):
     user = UserManagement(request).getCurrentUser()
@@ -75,11 +79,9 @@ def profilePage_view(request):
 
     user_posts = [post for post in posts_data if post["user"]["id"] == user.id]
 
-    context = {
-        "user": user,
-        "user_posts": user_posts
-    }
+    context = {"user": user, "user_posts": user_posts}
     return render(request, "profile.html", context)
+
 
 @csrf_exempt  # (temporär CSRF-Schutz deaktiviert – nur für Debugging-Zwecke)
 def createPostPage_view(request):
@@ -106,10 +108,19 @@ def createPostPage_view(request):
             return JsonResponse({"success": False, "error": str(e)}, status=400)
 
     # Bei GET einfach das Template anzeigen
-    return render(request, "create_post.html", {
-        "groups": groups.values(),
-        "musics": musics.values(),
-    })
+    return render(
+        request,
+        "create_post.html",
+        {
+            "groups": groups.values(),
+            "musics": musics.values(),
+        },
+    )
+
+
+def friendsPage_view(request):
+    return render(request, "friends.html")
+
 
 # BACKEND
 def registration_view(request):
@@ -140,9 +151,13 @@ def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
 
+
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
 
 
-def friendsPage_view(request):
-    return render(request, "friends.html")
+def spotify_search_view(request):
+    query = request.GET.get("q", "").lower().strip()
+
+    results = SpotifyConnector().search_music_title(query, 5)
+    return JsonResponse(results, safe=False)
