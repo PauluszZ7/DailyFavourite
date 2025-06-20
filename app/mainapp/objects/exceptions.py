@@ -105,3 +105,10 @@ class DailyFavouriteSpotifyInvalidBase62ID(DailyFavouriteBaseException):
         message = "Spotify ID is invalid and not a base62 ID"
         context = {"TrackID": track_id}
         super().__init__(400, message, context)
+
+class DailyFavouriteSpotifyNoConnectionPossible(DailyFavouriteBaseException):
+
+    def __init__(self, exception) -> None:
+        message = "No Spotify Connection possible, check .env.local within the static folder. See details."
+        context = {"error": exception}
+        super().__init__(500, message, context)

@@ -48,8 +48,10 @@ class TestSpotify:
 
         search = SpotifyConnector().search_music_title("Hallo", 3)
 
+        assert isinstance(search, list)
+        assert isinstance(search[0], dict)
         assert len(search) == 3
-        assert search[0] == ("6sizQj16amSoj5iXMDCx5J", "Hallow Kitty")
+        assert list(search[0].keys()) == ["id", "name", "artist"]
 
     @patch("mainapp.services.spotifyConnector.requests.get")
     @patch("mainapp.services.spotifyConnector.requests.post")
