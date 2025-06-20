@@ -32,6 +32,10 @@ from mainapp.views import (
     registration_view,
     logout_view,
     vote_view,
+    create_group_view,
+    my_groups_view,
+    edit_group_view,
+    delete_group_view,
 )
 
 urlpatterns = [
@@ -50,4 +54,8 @@ urlpatterns = [
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
     path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
+    path('groups/create/', create_group_view, name='group-create'),
+    path('groups/', my_groups_view, name='my-groups'),
+    path('groups/<int:group_id>/edit/', edit_group_view, name='group-edit'),
+    path('groups/<int:group_id>/delete/', delete_group_view, name='delete_group'),
 ]
