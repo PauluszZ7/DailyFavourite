@@ -158,7 +158,6 @@ def create_group_view(request):
 @login_required
 def edit_group_view(request, group_id):
     group = get_object_or_404(Group, id=group_id)
-    user_meta = UserMeta.objects.get(id=request.user.id)
 
     if request.method == "POST":
         group.name = request.POST.get("name")
@@ -200,6 +199,5 @@ def delete_group_view(request, group_id):
         messages.success(request, 'Gruppe wurde gelöscht!')
         return redirect('my-groups')
 
-    # Optional: Rückleitung, falls DELETE ohne POST aufgerufen wird
     messages.warning(request, 'Ungültige Anfrage.')
     return redirect('group-edit', group_id=group_id)
