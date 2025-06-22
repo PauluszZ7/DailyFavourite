@@ -5,7 +5,7 @@ from django.test import RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
 
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.services.userManagement import UserManagement
 from mainapp.objects.exceptions import DailyFavouriteNoUserFound

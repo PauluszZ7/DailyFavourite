@@ -37,6 +37,9 @@ class Group(models.Model):
     description = models.TextField(null=True, blank=True)
     is_public = models.BooleanField(default=True)
     max_posts_per_day = models.IntegerField(default=1)
+    genre = models.CharField(max_length=50, null=True, blank=True)
+    admin = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
+    profile_image = models.CharField(max_length=200, null=True, blank=True)
     post_permission = models.CharField(max_length=50)
     read_permission = models.CharField(max_length=50)
 

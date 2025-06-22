@@ -9,7 +9,7 @@ from mainapp.objects.exceptions import (
     DailyFavouriteMinimumRequiredParameter,
 )
 from mainapp.objects.dtos import UserDTO, PostDTO, GroupDTO, CommentDTO, VoteDTO
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 
 

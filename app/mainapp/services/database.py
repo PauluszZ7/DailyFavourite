@@ -1,5 +1,5 @@
 from mainapp.objects.dtos import ModelDTO
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.objects.exceptions import (
     DailyFavouriteDBAttributeNotFound,
     DailyFavouriteDBObjectCouldNotBeCreated,

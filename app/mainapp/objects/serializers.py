@@ -26,8 +26,9 @@ class GroupSerializer(serializers.ModelSerializer):
             "max_posts_per_day",
             "post_permission",
             "read_permission",
-            "profile_image",  # ✅ hinzugefügt
-            "genre",          # ✅ hinzugefügt
+            "profile_image",
+            "genre",
+            "admin",
         ]
 
 

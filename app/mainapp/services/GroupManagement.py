@@ -1,15 +1,13 @@
 from typing import List
 from datetime import datetime
-from uuid import uuid4
-import uuid 
+import uuid
 
 from mainapp.objects.exceptions import (
-    DailyFavouriteDBObjectCouldNotBeCreated,
     DailyFavouriteDBObjectNotFound,
     DailyFavouriteDBWrongObjectType,
 )
 from mainapp.objects.dtos import UserDTO, GroupDTO, PostDTO, MembershipDTO, RoleEnum
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.services.PostManagement import PostManagement
 
@@ -85,7 +83,12 @@ class GroupManagement:
         DatabaseManagement(self.user).delete(group, DTOEnum.GROUP)
 
     def joinGroup(self, group: GroupDTO, password: str | None = None) -> None:
-        if not group.is_public and hasattr(group, "password") and group.password and group.password != password:
+        if (
+            not group.is_public
+            and hasattr(group, "password")
+            and group.password
+            and group.password != password
+        ):
             raise PermissionError("Incorrect password.")
 
         try:
@@ -177,10 +180,12 @@ class GroupManagement:
         PostManagement(self.user).deletePost(post)
 
     def createPrivateArchiveGroupIfNotExists(self) -> None:
-        archive_identifier = f"archive-{self.user.id}"  
+        archive_identifier = f"archive-{self.user.id}"
 
         try:
-            groups = DatabaseManagement(self.user).list(archive_identifier, DTOEnum.GROUP, "description")
+            groups = DatabaseManagement(self.user).list(
+                archive_identifier, DTOEnum.GROUP, "description"
+            )
             for g in groups:
                 if not g.is_public and g.admin.id == self.user.id:
                     return
@@ -189,9 +194,9 @@ class GroupManagement:
 
         archive = GroupDTO(
             id=None,
-            name=str(uuid.uuid4()), 
+            name=str(uuid.uuid4()),
             created_at=datetime.now(),
-            description=archive_identifier, 
+            description=archive_identifier,
             profile_image=None,
             genre="gemischt",
             is_public=False,
@@ -206,18 +211,21 @@ class GroupManagement:
         membership = MembershipDTO(None, self.user, archive, "archive_viewer")
         DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
 
-
     def syncPostToArchiveGroup(self, post: PostDTO) -> None:
         """
         Fügt den Post zusätzlich zur persönlichen Archivgruppe des Users hinzu.
         """
         archive_group_name = f"{post.user.username}-archive-{post.user.id}"
         try:
-            groups = DatabaseManagement(self.user).list(archive_group_name, DTOEnum.GROUP, "name")
-            archive_group = next(g for g in groups if not g.is_public and g.admin.id == post.user.id)
+            groups = DatabaseManagement(self.user).list(
+                archive_group_name, DTOEnum.GROUP, "name"
+            )
+            archive_group = next(
+                g for g in groups if not g.is_public and g.admin.id == post.user.id
+            )
         except DailyFavouriteDBObjectNotFound:
             return
-        
+
         archive_post = PostDTO(
             id=None,
             user=post.user,

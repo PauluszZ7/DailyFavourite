@@ -1,4 +1,4 @@
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
 from mainapp.objects.dtos import ModelDTO
