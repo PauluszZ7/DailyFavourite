@@ -10,7 +10,6 @@ from mainapp.services.spotify import SpotifyConnector
 from django.views.decorators.http import require_GET
 
 from mainapp.services.userManagement import UserManagement
-from mainapp.services.spotifyConnector import SpotifyConnector
 
 
 # FRONTEND
@@ -119,10 +118,8 @@ def createPostPage_view(request):
         },
     )
 
-
 def friendsPage_view(request):
     return render(request, "friends.html")
-
 
 @require_GET
 def spotify_search_view(request):
