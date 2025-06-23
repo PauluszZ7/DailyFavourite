@@ -5,13 +5,15 @@ import os
 import requests
 import base64
 
+from django.conf import settings
 from mainapp.objects.dtos import MusicDTO
 from mainapp.objects.exceptions import (
     DailyFavouriteSpotifyInvalidBase62ID,
+    DailyFavouriteSpotifyNoConnectionPossible,
     DailyFavouriteSpotifyTrackNotFound,
 )
 
-load_dotenv(dotenv_path="../static/.env.local")
+load_dotenv(dotenv_path=f"{settings.BASE_DIR}/mainapp/static/.env.local")
 
 
 class SpotifyConnector:
@@ -34,7 +36,10 @@ class SpotifyConnector:
             },
             data={"grant_type": "client_credentials"},
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception as e:
+            raise DailyFavouriteSpotifyNoConnectionPossible(e)
 
         return response.json().get("access_token")
 
@@ -85,7 +90,17 @@ class SpotifyConnector:
         response.raise_for_status()
 
         data = response.json()
-        results = []
-        for item in data.get("tracks", {}).get("items", []):
-            results.append((item["id"], item["name"]))
-        return results
+        items = data.get("tracks", {}).get("items", [])
+        result = []
+        for item in items:
+            track_id = item.get("id")
+            name = item.get("name")
+            artists = ", ".join(artist["name"] for artist in item.get("artists", []))
+            result.append(
+                {
+                    "id": track_id,
+                    "name": name,
+                    "artist": artists,
+                }
+            )
+        return result

@@ -26,12 +26,14 @@ from mainapp.views import (
     favouritePage_view,
     friendsPage_view,
     homepageFeed_view,
+    createPostPage_view,
     groupFeed_view,
     friendsFeed_view,
     login_view,
     registration_view,
     logout_view,
     vote_view,
+    spotify_search_view,
 )
 
 urlpatterns = [
@@ -46,8 +48,10 @@ urlpatterns = [
     path("groupfeed/", groupFeed_view, name="groupfeed"),
     path("friends/", friendsPage_view, name="friends"),
     path("friendsfeed/", friendsFeed_view, name="friendsfeed"),
+    path("post/create/", createPostPage_view, name="create-post"),
     path("api/login/", login_view, name="backend-login"),
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
     path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
+    path("api/search/spotify/", spotify_search_view, name="spotify-search"),
 ]
