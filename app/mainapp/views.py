@@ -173,10 +173,3 @@ def logout_view(request):
 
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
-
-
-def spotify_search_view(request):
-    query = request.GET.get("q", "").lower().strip()
-
-    results = SpotifyConnector().search_music_title(query, 5)
-    return JsonResponse(results, safe=False)
