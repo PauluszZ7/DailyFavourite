@@ -36,6 +36,7 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(null=True, blank=True)
     is_public = models.BooleanField(default=True)
+    password = models.CharField(max_length=50, null=True, blank=True)
     max_posts_per_day = models.IntegerField(default=1)
     genre = models.CharField(max_length=50, null=True, blank=True)
     admin = models.ForeignKey(UserMeta, on_delete=models.CASCADE)

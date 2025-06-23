@@ -15,6 +15,12 @@ from mainapp.services.PostManagement import PostManagement
 class GroupManagement:
     user: UserDTO
 
+    # Check Permissions ÜBERALL
+    # MAXPOSTSPERDAY einbauen beim Post erstellen
+    # ListGroups darf archive groups nicht beinhalten (is_public muss raus da man ja mit Passwort auch private gruppen joinen kann)
+    # deletePost muss auch archive Post deleten
+    # password für die Gruppen richtig einbauen (models etc sollten jetzt da sein)
+
     def __init__(self, user: UserDTO) -> None:
         self.user = user
 
@@ -44,22 +50,36 @@ class GroupManagement:
         for m in memberships:
             if type(m) is not MembershipDTO:
                 raise DailyFavouriteDBWrongObjectType(MembershipDTO, type(m))
-            groups.append(m.group)
+            groups.append(DatabaseManagement(self.user).get(m.group, DTOEnum.GROUP))
         return groups
 
     def createGroup(self, group: GroupDTO) -> None:
         group.admin = self.user
         DatabaseManagement(self.user).get_or_create(group, DTOEnum.GROUP)
-        membership = MembershipDTO(None, self.user, group, RoleEnum.OWNER.value)
+        membership = MembershipDTO(None, self.user, group, RoleEnum.OWNER)
         DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
 
     def updateGroup(self, group: GroupDTO) -> None:
-        if group.admin.id != self.user.id:
+        if isinstance(group.admin, int):
+            admin_id = group.admin
+        elif isinstance(group.admin, UserDTO):
+            admin_id = group.admin.id
+        else:
+            raise DailyFavouriteDBWrongObjectType(UserDTO, type(group.admin))
+
+        if admin_id != self.user.id:
             raise PermissionError("User not authorized to update group.")
         DatabaseManagement(self.user).create_or_update(group, DTOEnum.GROUP)
 
     def deleteGroup(self, group: GroupDTO) -> None:
-        if group.admin.id != self.user.id:
+        if isinstance(group.admin, int):
+            admin_id = group.admin
+        elif isinstance(group.admin, UserDTO):
+            admin_id = group.admin.id
+        else:
+            raise DailyFavouriteDBWrongObjectType(UserDTO, type(group.admin))
+
+        if admin_id != self.user.id:
             raise PermissionError("User not authorized to delete group.")
 
         try:
@@ -99,10 +119,10 @@ class GroupManagement:
             memberships = []
 
         for m in memberships:
-            if type(m) is MembershipDTO and m.user.id == self.user.id:
+            if type(m) is MembershipDTO and m.user == self.user.id:
                 return
 
-        membership = MembershipDTO(None, self.user, group, RoleEnum.MEMBER.value)
+        membership = MembershipDTO(None, self.user, group, RoleEnum.MEMBER)
         DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
 
     def leaveGroup(self, group: GroupDTO) -> None:
@@ -114,7 +134,7 @@ class GroupManagement:
             return
 
         for m in memberships:
-            if type(m) is MembershipDTO and m.user.id == self.user.id:
+            if type(m) is MembershipDTO and m.user == self.user.id:
                 DatabaseManagement(self.user).delete(m, DTOEnum.MEMBERSHIP)
                 return
 
@@ -133,7 +153,7 @@ class GroupManagement:
         for m in memberships:
             if type(m) is not MembershipDTO:
                 raise DailyFavouriteDBWrongObjectType(MembershipDTO, type(m))
-            users.append(m.user)
+            users.append(DatabaseManagement(self.user).get(m.user, DTOEnum.USER))
         return users
 
     def userIsMemberOfGroup(self, group: GroupDTO, user: UserDTO | None = None) -> bool:
@@ -147,9 +167,7 @@ class GroupManagement:
         except DailyFavouriteDBObjectNotFound:
             return False
 
-        return any(
-            type(m) is MembershipDTO and m.user.id == user.id for m in memberships
-        )
+        return any(type(m) is MembershipDTO and m.user == user.id for m in memberships)
 
     def removeUserFromGroup(self, group: GroupDTO, user: UserDTO) -> None:
         try:
@@ -160,7 +178,7 @@ class GroupManagement:
             return
 
         for m in memberships:
-            if type(m) is MembershipDTO and m.user.id == user.id:
+            if type(m) is MembershipDTO and m.user == user.id:
                 DatabaseManagement(self.user).delete(m, DTOEnum.MEMBERSHIP)
                 return
 
@@ -171,8 +189,16 @@ class GroupManagement:
         ):
             raise PermissionError("Post permission denied.")
 
+        post.user = self.user
+
         PostManagement(self.user).createPost(post)
         self.syncPostToArchiveGroup(post)
+
+    def listPosts(self, group: GroupDTO) -> List[PostDTO]:
+        if self.user.id in [u.id for u in self.getMembers(group)]:
+            return PostManagement(self.user).listPosts(group)
+        else:
+            raise PermissionError("Reading of Posts denied.")
 
     def deletePost(self, post: PostDTO) -> None:
         if post.user.id != self.user.id and post.group.admin.id != self.user.id:
@@ -180,15 +206,13 @@ class GroupManagement:
         PostManagement(self.user).deletePost(post)
 
     def createPrivateArchiveGroupIfNotExists(self) -> None:
-        archive_identifier = f"archive-{self.user.id}"
-
         try:
-            groups = DatabaseManagement(self.user).list(
-                archive_identifier, DTOEnum.GROUP, "description"
+            memberships = DatabaseManagement(self.user).list(
+                "archive_viewer", DTOEnum.MEMBERSHIP, "role"
             )
-            for g in groups:
-                if not g.is_public and g.admin.id == self.user.id:
-                    return
+            for m in memberships:
+                if m.user == self.user.id:
+                    return None
         except DailyFavouriteDBObjectNotFound:
             pass
 
@@ -196,35 +220,44 @@ class GroupManagement:
             id=None,
             name=str(uuid.uuid4()),
             created_at=datetime.now(),
-            description=archive_identifier,
+            description=self._get_archive_name(),
             profile_image=None,
-            genre="gemischt",
+            genre=None,
             is_public=False,
-            max_posts_per_day=9999,
+            password=str(self.user.id),
+            max_posts_per_day=-1,
             post_permission="admin",
-            read_permission="admin",
+            read_permission="members",
             admin=self.user,
         )
 
         DatabaseManagement(self.user).get_or_create(archive, DTOEnum.GROUP)
 
-        membership = MembershipDTO(None, self.user, archive, "archive_viewer")
+        membership = MembershipDTO(None, self.user, archive, RoleEnum.ARCHIVE_VIEWER)
         DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
 
     def syncPostToArchiveGroup(self, post: PostDTO) -> None:
         """
         Fügt den Post zusätzlich zur persönlichen Archivgruppe des Users hinzu.
         """
-        archive_group_name = f"{post.user.username}-archive-{post.user.id}"
+        self.createPrivateArchiveGroupIfNotExists()
+
         try:
-            groups = DatabaseManagement(self.user).list(
-                archive_group_name, DTOEnum.GROUP, "name"
+            memberships = DatabaseManagement(self.user).list(
+                "archive_viewer", DTOEnum.MEMBERSHIP, "role"
             )
-            archive_group = next(
-                g for g in groups if not g.is_public and g.admin.id == post.user.id
-            )
+            for m in memberships:
+                if m.user == self.user.id:
+                    archive_group = DatabaseManagement(self.user).get(
+                        m.group, DTOEnum.GROUP
+                    )
+                    break
+
         except DailyFavouriteDBObjectNotFound:
             return
+
+        if archive_group is None:
+            raise DailyFavouriteDBObjectNotFound(DTOEnum.GROUP, id=-1)
 
         archive_post = PostDTO(
             id=None,
@@ -234,3 +267,6 @@ class GroupManagement:
             posted_at=post.posted_at,
         )
         PostManagement(post.user).createPost(archive_post)
+
+    def _get_archive_name(self) -> str:
+        return f"archive-{self.user.id}"

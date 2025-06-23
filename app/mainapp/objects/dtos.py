@@ -26,6 +26,7 @@ class GroupDTO(ModelDTO):
     profile_image: Any
     genre: str | None
     is_public: bool
+    password: str | None
     max_posts_per_day: int
     post_permission: str
     read_permission: str
@@ -70,7 +71,4 @@ class VoteDTO(ModelDTO):
 class MembershipDTO(ModelDTO):
     user: UserDTO
     group: GroupDTO
-    role: str
-
-    def __post_init__(self):
-        self.role = RoleEnum.validate(self.role)
+    role: RoleEnum

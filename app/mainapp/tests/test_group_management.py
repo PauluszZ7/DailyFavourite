@@ -4,183 +4,223 @@ from django.test import RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
 
+from mainapp.models import Post
 from mainapp.services.GroupManagement import GroupManagement
 from mainapp.services.database import DatabaseManagement
-from mainapp.objects.dtos import UserDTO, GroupDTO, MembershipDTO, PostDTO, MusicDTO
-from mainapp.objects.dto_enums import DTOEnum, RoleEnum
+from mainapp.services.userManagement import UserManagement
+from mainapp.objects.dtos import UserDTO, GroupDTO, PostDTO
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
 from mainapp.tests.helpers import create_dummy_instance
+
+USERNAME = "testuser"
+PASSWORD = "testpassword"
+
 
 @pytest.mark.django_db
 class TestGroupManagement:
 
     @pytest.fixture
-    def simUser(self):
-        user = User.objects.create_user(username="dummy", password="pw")
-        dto = UserDTO(user.id, user.username, None, None, None)
-        DatabaseManagement(dto).get_or_create(dto, DTOEnum.USER)
-        return dto
-    
-    @pytest.fixture
-    def simGroup(self, simUser):
-        group = create_dummy_instance(GroupDTO)
-        group.id = 1
-        group.admin = simUser
-        DatabaseManagement(simUser).get_or_create(group, DTOEnum.GROUP)
-        return group
-    
-    @pytest.fixture
-    def simMembership(self, simUser, simGroup):
-        membership = MembershipDTO(None, simUser, simGroup, RoleEnum.OWNER.value)
-        DatabaseManagement(simUser).get_or_create(membership, DTOEnum.MEMBERSHIP)
-        return membership
-    
-    @pytest.fixture
-    def simRequest(self, simUser):
+    def simRequest(self):
+        # sim request
         request = RequestFactory().get("/")
         SessionMiddleware(get_response=lambda x: x).process_request(request)
         AuthenticationMiddleware(lambda r: r).process_request(request)
         request.session.save()
-        request.user = User.objects.get(username=simUser.username)
+
+        user = User.objects.create_user(username=USERNAME, password=PASSWORD)
+        UserManagement(request).login(USERNAME, PASSWORD)
+        DatabaseManagement(None).get_or_create(
+            UserDTO(user.id, user.username, None, None, None), DTOEnum.USER
+        )
         return request
-    
-    def testgetGroup(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        group = group_management.getGroup(simGroup.id)
-        assert isinstance(group, GroupDTO)
-        assert group.id == simGroup.id
 
-    def testlistGroups(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        groups = group_management.listGroups()
-        assert isinstance(groups, list)
-        assert len(groups) > 0
-        assert isinstance(groups[0], GroupDTO)
+    @pytest.fixture
+    def secondSimUser(self):
+        other_user = DatabaseManagement(None).get_or_create(
+            UserDTO(2, "other", None, None, None), DTOEnum.USER
+        )
+        return other_user
 
-    def testlistGroupsWhereUserIsMember(self, simRequest, simMembership):
-        group_management = GroupManagement(simRequest.user)
-        groups = group_management.listGroupsWhereUserIsMember()
-        assert isinstance(groups, list)
-        assert len(groups) > 0
-        assert isinstance(groups[0], GroupDTO)
-        assert groups[0].id == simMembership.group.id
+    # Tests
+    def test_get_create_delete_group(self, simRequest):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
 
-    def testcreateGroup(self, simRequest, simUser):
-        group_management = GroupManagement(simRequest.user)
+        group_management = GroupManagement(user)
         new_group = create_dummy_instance(GroupDTO)
-        new_group.admin = simUser
+        new_group.id = 123
         group_management.createGroup(new_group)
 
         created_group = group_management.getGroup(new_group.id)
+
         assert isinstance(created_group, GroupDTO)
-        assert created_group.admin.id == simUser.id
+        assert created_group.admin == user.id
 
-    def testupdateGroup(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        simGroup.name = "Updated Group Name"
-        group_management.updateGroup(simGroup)
-
-        updated_group = group_management.getGroup(simGroup.id)
-        assert updated_group.name == "Updated Group Name"
-
-    def testdeleteGroup(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        group_management.deleteGroup(simGroup)
+        group_management.deleteGroup(created_group)
 
         with pytest.raises(DailyFavouriteDBObjectNotFound):
-            group_management.getGroup(simGroup.id)
+            group_management.getGroup(created_group.id)
 
-    def testjoinGroup(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        membership = MembershipDTO(None, simRequest.user, simGroup, RoleEnum.MEMBER.value)
-        group_management.createGroup(simGroup)
+    def test_list_groups(self, simRequest):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
 
-    def testleaveGroup(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        membership = MembershipDTO(None, simRequest.user, simGroup, RoleEnum.MEMBER.value)
-        group_management.createGroup(simGroup)
+        group_management = GroupManagement(user)
+        new_group = create_dummy_instance(GroupDTO)
+        new_group.id = 123
+        group_management.createGroup(new_group)
 
-        DatabaseManagement(simRequest.user).delete(membership, DTOEnum.MEMBERSHIP)
+        new_group = create_dummy_instance(GroupDTO)
+        group_management.createGroup(new_group)
 
-        with pytest.raises(DailyFavouriteDBObjectNotFound):
-            group_management.getGroup(simGroup.id)
+        groups = group_management.listGroups()
 
-    def testgetMembers(self, simRequest, simGroup, simMembership):
-        group_management = GroupManagement(simRequest.user)
-        members = group_management.listGroupsWhereUserIsMember()
+        assert isinstance(groups, list)
+        assert (
+            len(groups) == 3
+        )  # +1 für archive group (testet daher auch die erstellung dieser Gruppe gleich mit.)
+        assert isinstance(groups[0], GroupDTO)
+        assert isinstance(groups[1], GroupDTO)
 
-        assert isinstance(members, list)
-        assert len(members) > 0
-        assert isinstance(members[0], GroupDTO)
-        assert members[0].id == simGroup.id
+    def test_list_groups_where_user_is_member(self, simRequest, secondSimUser):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
 
-    def testuserIsMemberOfGroup(self, simRequest, simGroup, simMembership):
-        group_management = GroupManagement(simRequest.user)
-        is_member = group_management.userIsMemberOfGroup(simGroup)
+        group_management = GroupManagement(user)
+        new_group = create_dummy_instance(GroupDTO)
+        new_group.id = 123
+        group_management.createGroup(new_group)
 
-        assert is_member is True
+        new_group = create_dummy_instance(GroupDTO)
+        new_group.id = 124
+        group_management.createGroup(new_group)
 
-    def testremoveUserFromGroup(self, simRequest, simGroup, simMembership):
-        group_management = GroupManagement(simRequest.user)
-        group_management.deleteGroup(simGroup)
+        other_group = create_dummy_instance(GroupDTO)
+        other_group.id = 44
 
-        with pytest.raises(DailyFavouriteDBObjectNotFound):
-            group_management.getGroup(simGroup.id)
+        GroupManagement(secondSimUser).createGroup(other_group)
 
-    def testcreatePost(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        post = create_dummy_instance(PostDTO)
-        post.group = simGroup
-        post.user = simRequest.user
+        groups = group_management.listGroupsWhereUserIsMember()
 
-        group_management.createPost(post)
+        assert isinstance(groups, list)
+        assert len(groups) == 2
+        assert isinstance(groups[0], GroupDTO)
+        assert groups[0].id != other_group.id
+        assert isinstance(groups[1], GroupDTO)
+        assert groups[1].id != other_group.id
 
-        created_post = group_management.getPost(post.id)
-        assert isinstance(created_post, PostDTO)
-        assert created_post.group.id == simGroup.id
-        assert created_post.user.id == simRequest.user.id
-    
-    def testdeletePost(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
-        post = create_dummy_instance(PostDTO)
-        post.group = simGroup
-        post.user = simRequest.user
+    def test_update_group(self, simRequest):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
 
-        group_management.createPost(post)
-        group_management.deletePost(post)
-
-        with pytest.raises(DailyFavouriteDBObjectNotFound):
-            group_management.getPost(post.id)
-
-    def testcreatePrivateArchiveGroupIfNotExists(self, simRequest):
-        group_management = GroupManagement(simRequest.user)
+        group_management = GroupManagement(user)
         group = create_dummy_instance(GroupDTO)
-        group.is_public = False
-        group.name = "Private Archive"
-        group.description = "A private archive for personal posts."
-        
+        group.id = 123
         group_management.createGroup(group)
 
-        created_group = group_management.getGroup(group.id)
-        assert isinstance(created_group, GroupDTO)
-        assert created_group.is_public is False
-        assert created_group.name == "Private Archive"
+        group.name = "Updated Group Name"
+        group_management.updateGroup(group)
 
-    def testsyncPostToArchiveGroup(self, simRequest, simGroup):
-        group_management = GroupManagement(simRequest.user)
+        updated_group = group_management.getGroup(group.id)
+        assert updated_group.name == "Updated Group Name"
+
+    def test_join_leave_userIsMember_group(self, simRequest, secondSimUser):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group_management.createGroup(group)
+
+        GroupManagement(secondSimUser).joinGroup(group)
+        assert GroupManagement(secondSimUser).userIsMemberOfGroup(group)
+
+        GroupManagement(secondSimUser).leaveGroup(group)
+        assert not GroupManagement(secondSimUser).userIsMemberOfGroup(group)
+
+    def testjoinPrivateGroup(self, simRequest, secondSimUser):
+        pass
+
+    def test_get_members(self, simRequest, secondSimUser):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group_management.createGroup(group)
+        GroupManagement(secondSimUser).joinGroup(group)
+        members = group_management.getMembers(group)
+
+        assert isinstance(members, list)
+        assert len(members) == 2
+        assert isinstance(members[0], UserDTO)
+        assert members[0].id == user.id
+        assert isinstance(members[1], UserDTO)
+        assert members[1].id == secondSimUser.id
+
+    def test_remove_user_from_group(self, simRequest, secondSimUser):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group_management.createGroup(group)
+        GroupManagement(secondSimUser).joinGroup(group)
+
+        members = group_management.getMembers(group)
+        assert len(members) == 2
+
+        group_management.removeUserFromGroup(group, secondSimUser)
+        members = group_management.getMembers(group)
+        assert len(members) == 1
+        assert members[0].id == user.id
+
+    def test_create_sync_delete_Posts(self, simRequest):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group_management.createGroup(group)
+
+        posts_before = len(Post.objects.all())
+
         post = create_dummy_instance(PostDTO)
-        post.group = simGroup
-        post.user = simRequest.user
-
+        post.id = 122352
+        post.group = group
         group_management.createPost(post)
-        group_management.syncPostToArchiveGroup(post)
+        post2 = create_dummy_instance(PostDTO)
+        post2.id = 44
+        post2.group = group
+        group_management.createPost(post2)
+        created_post = group_management.listPosts(group)
+        posts_after = len(Post.objects.all())
 
-        archive_group = group_management.getPrivateArchiveGroup()
-        assert archive_group is not None
-        assert isinstance(archive_group, GroupDTO)
+        assert isinstance(created_post, list)
+        assert len(created_post) == 2
+        assert isinstance(created_post[0], PostDTO)
+        assert created_post[0].group == group.id
+        assert created_post[0].user == simRequest.user.id
+        # test sync of Posts
+        assert posts_before + 2 == (posts_after - posts_before) / 2
 
-        archived_posts = group_management.listPosts(archive_group)
-        assert len(archived_posts) > 0
-        assert archived_posts[0].id == post.id
+        group_management.deletePost(post)
+        created_post = group_management.listPosts(group)
 
+        assert isinstance(created_post, list)
+        assert len(created_post) == 1
+        assert isinstance(created_post[0], PostDTO)
 
+    def test_admin_permissions(self, simRequest, secondSimUser):
+        pass
+
+    def test_post_permissions(self, simRequest, secondSimUser):
+        pass
+
+    def test_max_post_per_day(self, simRequest):
+        pass

@@ -23,6 +23,7 @@ class GroupSerializer(serializers.ModelSerializer):
             "created_at",
             "description",
             "is_public",
+            "password",
             "max_posts_per_day",
             "post_permission",
             "read_permission",
