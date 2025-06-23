@@ -6,6 +6,8 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from mainapp.services.spotify import SpotifyConnector
+from django.views.decorators.http import require_GET
 
 from mainapp.services.userManagement import UserManagement
 from mainapp.services.spotifyConnector import SpotifyConnector
@@ -121,6 +123,26 @@ def createPostPage_view(request):
 def friendsPage_view(request):
     return render(request, "friends.html")
 
+
+@require_GET
+def spotify_search_view(request):
+    query = request.GET.get("q")
+    if not query:
+        return JsonResponse({"error": "Fehlender Suchbegriff (q)"}, status=400)
+
+    spotify = SpotifyConnector()
+    results = spotify.search_tracks(query)
+
+    # Die Lieder in JSON umformatieren
+    formatted = [
+        {
+            "id": track.id,
+            "name": track.name,
+            "artist": track.artist,
+        }
+        for track in results
+    ]
+    return JsonResponse(formatted, safe=False)
 
 # BACKEND
 def registration_view(request):

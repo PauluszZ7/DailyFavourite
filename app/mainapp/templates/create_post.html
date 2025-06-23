@@ -19,8 +19,8 @@
       <label for="music_id" class="form-label">Musik</label>
       <select class="form-select" id="music_id" name="music_id" required>
         {% for music in musics %}
-          <option value="{{ music.id }}">{{ music.name }} – {{ music.artist }}</option>
-        {% endfor %}
+          <option value="{{ music.id }}">{{ music.name }} - {{ music.artist }}</option>
+        {% endfor %} 
       </select>
     </div>
 

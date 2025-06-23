@@ -53,5 +53,5 @@ urlpatterns = [
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),
     path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
-    path("api/search/track/", spotify_search_view, name="spotify-search"),
+    path("api/search/spotify/", spotify_search_view, name="spotify-search"),
 ]
