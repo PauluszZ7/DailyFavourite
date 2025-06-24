@@ -16,10 +16,10 @@ class GroupManagement:
     user: UserDTO
 
     # Check Permissions ÜBERALL
-    # MAXPOSTSPERDAY einbauen beim Post erstellen
-    # ListGroups darf archive groups nicht beinhalten (is_public muss raus da man ja mit Passwort auch private gruppen joinen kann)
-    # deletePost muss auch archive Post deleten
-    # password für die Gruppen richtig einbauen (models etc sollten jetzt da sein)
+    # MAXPOSTSPERDAY einbauen beim Post erstellen1
+    # ListGroups darf archive groups nicht beinhalten (is_public muss raus da man ja mit Passwort auch private gruppen joinen kann)0.5
+    # deletePost muss auch archive Post deleten1
+    # password für die Gruppen richtig einbauen (models etc sollten jetzt da sein)1
 
     def __init__(self, user: UserDTO) -> None:
         self.user = user
@@ -105,9 +105,9 @@ class GroupManagement:
     def joinGroup(self, group: GroupDTO, password: str | None = None) -> None:
         if (
             not group.is_public
-            and hasattr(group, "password")
-            and group.password
-            and group.password != password
+            and not self.userIsMemberOfGroup(group)
+            and (group.password is None or group.password == "")
+            and (password is None or password == "")
         ):
             raise PermissionError("Incorrect password.")
 
@@ -183,6 +183,13 @@ class GroupManagement:
                 return
 
     def createPost(self, post: PostDTO) -> None:
+        MAXPOSTSPERDAY = post.group.max_posts_per_day
+        if MAXPOSTSPERDAY > 0:
+            posts_today = PostManagement(self.user).countPostsToday(post.group)
+            if posts_today >= MAXPOSTSPERDAY:
+                raise PermissionError(
+                    f"Maximum number of posts per day ({MAXPOSTSPERDAY}) reached."
+                )
         if (
             post.group.post_permission == "admin"
             and post.group.admin.id != self.user.id
@@ -204,6 +211,7 @@ class GroupManagement:
         if post.user.id != self.user.id and post.group.admin.id != self.user.id:
             raise PermissionError("Delete permission denied.")
         PostManagement(self.user).deletePost(post)
+        self.syncPostToArchiveGroup(post)
 
     def createPrivateArchiveGroupIfNotExists(self) -> None:
         try:

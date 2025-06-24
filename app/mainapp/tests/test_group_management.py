@@ -62,6 +62,7 @@ class TestGroupManagement:
         with pytest.raises(DailyFavouriteDBObjectNotFound):
             group_management.getGroup(created_group.id)
 
+
     def test_list_groups(self, simRequest):
         user = UserManagement(simRequest).getCurrentUser()
         assert user is not None
@@ -217,7 +218,19 @@ class TestGroupManagement:
         assert isinstance(created_post[0], PostDTO)
 
     def test_admin_permissions(self, simRequest, secondSimUser):
-        pass
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None 
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group_management.createGroup(group)
+
+        test_user = user.objects.create_user(username="testuser", password="testpassword")
+        test_user_dto = DatabaseManagement(None).get_or_create(
+            UserDTO(test_user.id, test_user.username, None, None, None), DTOEnum.USER
+        )
+        testuser_
 
     def test_post_permissions(self, simRequest, secondSimUser):
         pass
