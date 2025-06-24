@@ -16,13 +16,12 @@
     </div>
 
     <div class="mb-3">
-      <label for="music_id" class="form-label">Musik</label>
-      <select class="form-select" id="music_id" name="music_id" required>
-        {% for music in musics %}
-          <option value="{{ music.id }}">{{ music.name }} - {{ music.artist }}</option>
-        {% endfor %} 
-      </select>
+      <label for="music_search" class="form-label">Musik suchen (Spotify)</label>
+      <input type="text" class="form-control" id="music_search" placeholder="Suchbegriff...">
+      <input type="hidden" id="music_id" name="music_id" required>
     </div>
+
+    <ul id="search_results" class="list-group mt-2"></ul>
 
     <button type="submit" class="btn btn-primary">Posten</button>
   </form>
