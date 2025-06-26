@@ -6,7 +6,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-from mainapp.services.spotify import SpotifyConnector
+from mainapp.services.spotifyConnector import SpotifyConnector
 from django.views.decorators.http import require_GET
 
 from mainapp.services.userManagement import UserManagement
@@ -121,25 +121,6 @@ def createPostPage_view(request):
 def friendsPage_view(request):
     return render(request, "friends.html")
 
-@require_GET
-def spotify_search_view(request):
-    query = request.GET.get("q")
-    if not query:
-        return JsonResponse({"error": "Fehlender Suchbegriff (q)"}, status=400)
-
-    spotify = SpotifyConnector()
-    results = spotify.search_tracks(query)
-
-    # Die Lieder in JSON umformatieren
-    formatted = [
-        {
-            "id": track.id,
-            "name": track.name,
-            "artist": track.artist,
-        }
-        for track in results
-    ]
-    return JsonResponse(formatted, safe=False)
 
 # BACKEND
 def registration_view(request):
@@ -173,3 +154,16 @@ def logout_view(request):
 
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
+
+@require_GET
+def spotify_search_view(request):
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"error": "Fehlender Suchbegriff (q)"}, status=400)
+    
+    try:
+        spotify = SpotifyConnector()
+        results = spotify.search_music_title(query, max_results=5)
+        return JsonResponse(results, safe=False)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
