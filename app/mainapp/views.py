@@ -155,7 +155,15 @@ def logout_view(request):
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
 
+@require_GET
 def spotify_search_view(request):
-    query = request.GET.get("q", "").lower().strip()
-    results = SpotifyConnector().search_music_title(query, 5)
-    return JsonResponse(results, safe=False)
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"error": "Fehlender Suchbegriff (q)"}, status=400)
+    
+    try:
+        spotify = SpotifyConnector()
+        results = spotify.search_music_title(query, max_results=5)
+        return JsonResponse(results, safe=False)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

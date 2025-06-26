@@ -3,58 +3,48 @@
 {% block content %}
 <div class="container mt-4">
   <h2>Post erstellen</h2>
-
   <form id="postForm">
+    <!-- Поле поиска музыки -->
     <div class="mb-3">
-      <label for="group_id" class="form-label">Gruppe</label>
-      <select class="form-select" id="group_id" name="group_id">
-        <option value="">Keine Gruppe</option>
-        {% for group in groups %}
-          <option value="{{ group.id }}">{{ group.name }}</option>
-        {% endfor %}
-      </select>
+      <label>Musik suchen</label>
+      <input type="text" id="music_search" class="form-control" placeholder="Song suchen...">
+      <input type="hidden" id="music_id" name="music_id">
+      <div id="search_results" class="list-group mt-2"></div>
     </div>
-
-    <div class="mb-3">
-      <label for="music_search" class="form-label">Musik suchen (Spotify)</label>
-      <input type="text" class="form-control" id="music_search" placeholder="Suchbegriff...">
-      <input type="hidden" id="music_id" name="music_id" required>
-    </div>
-
-    <ul id="search_results" class="list-group mt-2"></ul>
-
     <button type="submit" class="btn btn-primary">Posten</button>
   </form>
-
-  <div id="status" class="mt-3"></div>
 </div>
 
 <script>
-document.getElementById('postForm').addEventListener('submit', async function(event) {
-  event.preventDefault();
+  // 1. Live Search
+  document.getElementById('music_search').addEventListener('input', async (e) => {
+    const query = e.target.value.trim();
+    if (query.length < 2) return;
 
-  const groupId = document.getElementById('group_id').value || null;
-  const musicId = document.getElementById('music_id').value;
-
-  const response = await fetch("{% url 'create-post' %}", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      group_id: groupId ? parseInt(groupId) : null,
-      music_id: musicId
-    })
+    const response = await fetch(`/api/search/spotify/?q=${query}`);
+    const tracks = await response.json();
+    
+    const results = document.getElementById('search_results');
+    results.innerHTML = tracks.map(track => `
+      <a href="#" class="list-group-item" 
+         onclick="document.getElementById('music_search').value='${track.name} - ${track.artist}';
+                  document.getElementById('music_id').value='${track.id}';
+                  this.parentNode.innerHTML=''">
+        ${track.name} — ${track.artist}
+      </a>
+    `).join('');
   });
 
-  const statusDiv = document.getElementById("status");
-  if (response.ok) {
-    statusDiv.innerHTML = `<div class="alert alert-success">Post erfolgreich erstellt!</div>`;
-    document.getElementById("postForm").reset();
-  } else {
-    const errorData = await response.json();
-    statusDiv.innerHTML = `<div class="alert alert-danger">Fehler: ${errorData.error || 'Unbekannter Fehler'}</div>`;
-  }
-});
+  // 2. Form submit
+  document.getElementById('postForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await fetch("{% url 'create-post' %}", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        music_id: document.getElementById('music_id').value
+      })
+    });
+    alert("Post erstellt!");
+  });
 </script>
-{% endblock %}
