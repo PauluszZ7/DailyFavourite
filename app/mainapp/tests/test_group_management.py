@@ -149,7 +149,26 @@ class TestGroupManagement:
         assert not GroupManagement(secondSimUser).userIsMemberOfGroup(group)
 
     def testjoinPrivateGroup(self, simRequest, secondSimUser):
-        pass
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group.is_public = False
+        group.password = "TEST"
+        group_management.createGroup(group)
+
+        gm = GroupManagement(secondSimUser)
+        with pytest.raises(PermissionError):
+            gm.joinGroup(group)
+
+        with pytest.raises(PermissionError):
+            gm.joinGroup(group, "falsches password")
+
+        assert not gm.userIsMemberOfGroup(group)
+        gm.joinGroup(group, "TEST")
+        assert gm.userIsMemberOfGroup(group)
 
     def test_get_members(self, simRequest, secondSimUser):
         user = UserManagement(simRequest).getCurrentUser()
@@ -218,25 +237,41 @@ class TestGroupManagement:
         # test sync of Posts
         assert posts_before + 2 == (posts_after - posts_before) / 2
 
+        archive_post_before = group_management.listPosts(group_management.get_archive())
+
         group_management.deletePost(post)
         created_post = group_management.listPosts(group)
+
+        archive_post_after = group_management.listPosts(group_management.get_archive())
 
         assert isinstance(created_post, list)
         assert len(created_post) == 1
         assert isinstance(created_post[0], PostDTO)
+        assert (
+            len(archive_post_after) == len(archive_post_before) - 1
+        )  # check Archive Post got deleted
 
-    def test_admin_permissions(self, simRequest, secondSimUser):
-        user = UserManagement(simRequest).getCurrentUser()
-        assert user is not None
+    def test_moderator_permissions(self, simRequest, secondSimUser):
+        # posten (nur mit postpermissions)
+        # löschen (nur mit postpermissions)
+        # remove user
 
-        group_management = GroupManagement(user)
-        group = create_dummy_instance(GroupDTO)
-        group.id = 123
-        group_management.createGroup(group)
-
+        # nicht
+        # gruppe updaten
+        # gruppe löschen
         pass
 
-    def test_post_permissions(self, simRequest, secondSimUser):
+    def test_member_permissions(self, simRequest, secondSimUser):
+        # NICHT
+        # gruppe updaten
+        # gruppe löschen
+        # remove user
+
+        # löschen (nur wenn eigener)
+        # posten (nur wenn post permissions)
+        pass
+
+    def test_user_not_in_group(self, simRequest, secondSimUser):
         pass
 
     def test_max_post_per_day(self, simRequest):

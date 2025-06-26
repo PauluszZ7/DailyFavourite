@@ -6,6 +6,8 @@ from mainapp.objects.exceptions import (
     DailyFavouriteDBObjectNotFound,
     DailyFavouriteDBWrongObjectType,
     DailyFavouriteMaxPostsPerDayReached,
+    DailyFavouriteUserAlreadyInGroup,
+    DailyFavouritePrivateGroupMustContainPassword,
 )
 from mainapp.objects.dtos import UserDTO, GroupDTO, PostDTO, MembershipDTO, RoleEnum
 from mainapp.objects.dto_enums import DTOEnum
@@ -17,10 +19,6 @@ class GroupManagement:
     user: UserDTO
 
     # Check Permissions ÜBERALL
-    # MAXPOSTSPERDAY einbauen beim Post erstellen1
-    # ListGroups darf archive groups nicht beinhalten (is_public muss raus da man ja mit Passwort auch private gruppen joinen kann)0.5
-    # deletePost muss auch archive Post deleten1
-    # password für die Gruppen richtig einbauen (models etc sollten jetzt da sein)1
 
     def __init__(self, user: UserDTO) -> None:
         self.user = user
@@ -76,6 +74,9 @@ class GroupManagement:
         return groups
 
     def createGroup(self, group: GroupDTO) -> None:
+        if (group.password is None or group.password == "") and not group.is_public:
+            raise DailyFavouritePrivateGroupMustContainPassword()
+
         group.admin = self.user
         DatabaseManagement(self.user).get_or_create(group, DTOEnum.GROUP)
         membership = MembershipDTO(None, self.user, group, RoleEnum.OWNER)
@@ -125,11 +126,12 @@ class GroupManagement:
         DatabaseManagement(self.user).delete(group, DTOEnum.GROUP)
 
     def joinGroup(self, group: GroupDTO, password: str | None = None) -> None:
+        if self.userIsMemberOfGroup(group):
+            raise DailyFavouriteUserAlreadyInGroup()
         if (
             not group.is_public
-            and not self.userIsMemberOfGroup(group)
-            and (group.password is None or group.password == "")
-            and (password is None or password == "")
+            and (group.password is not None or group.password != "")
+            and group.password != password
         ):
             raise PermissionError("Incorrect password.")
 
@@ -217,6 +219,7 @@ class GroupManagement:
             raise PermissionError("Post permission denied.")
 
         post.user = self.user
+        post.posted_at = datetime.now()
 
         PostManagement(self.user).createPost(post)
         self.syncPostToArchiveGroup(post)
@@ -231,7 +234,20 @@ class GroupManagement:
         if post.user.id != self.user.id and post.group.admin.id != self.user.id:
             raise PermissionError("Delete permission denied.")
         PostManagement(self.user).deletePost(post)
-        self.syncPostToArchiveGroup(post)
+        archive_post = self._get_archive_post(post)
+        PostManagement(self.user).deletePost(archive_post)
+
+    def get_archive(self) -> GroupDTO:
+        memberships = DatabaseManagement(self.user).list(
+            "archive_viewer", DTOEnum.MEMBERSHIP, "role"
+        )
+        for m in memberships:
+            if m.user == self.user.id:
+                archive_group = DatabaseManagement(self.user).get(
+                    m.group, DTOEnum.GROUP
+                )
+                break
+        return archive_group
 
     def createPrivateArchiveGroupIfNotExists(self) -> None:
         try:
@@ -279,16 +295,7 @@ class GroupManagement:
         """
 
         try:
-            memberships = DatabaseManagement(self.user).list(
-                "archive_viewer", DTOEnum.MEMBERSHIP, "role"
-            )
-            for m in memberships:
-                if m.user == self.user.id:
-                    archive_group = DatabaseManagement(self.user).get(
-                        m.group, DTOEnum.GROUP
-                    )
-                    break
-
+            archive_group = self.get_archive()
         except DailyFavouriteDBObjectNotFound:
             return
 
@@ -324,3 +331,23 @@ class GroupManagement:
                 todays_posts += 1
 
         return todays_posts
+
+    def _get_archive_post(self, post: PostDTO) -> PostDTO:
+        archive = self.get_archive()
+        archive_posts = DatabaseManagement(self.user).list(
+            archive.id, DTOEnum.POST, "group_id"
+        )
+        archive_post = None
+
+        post.posted_at = post.posted_at.replace(tzinfo=None)
+
+        for p in archive_posts:
+            p.posted_at = datetime.fromisoformat(p.posted_at).replace(tzinfo=None)
+            if (p.posted_at == post.posted_at) and (int(p.music) == int(post.music.id)):
+                archive_post = p
+                break
+
+        if isinstance(archive_post, PostDTO):
+            return archive_post
+        else:
+            raise DailyFavouriteDBObjectNotFound(DTOEnum.POST, -1)

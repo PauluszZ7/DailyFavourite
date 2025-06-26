@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class UserMeta(models.Model):
@@ -77,7 +78,7 @@ class Post(models.Model):
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     music = models.ForeignKey(Music, on_delete=models.CASCADE)
-    posted_at = models.DateTimeField(auto_now_add=True)
+    posted_at = models.DateTimeField(default=timezone.now)
 
 
 class Comment(models.Model):

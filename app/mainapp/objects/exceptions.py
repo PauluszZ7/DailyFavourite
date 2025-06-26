@@ -57,6 +57,22 @@ class DailyFavouriteAlreadyVotedForPost(DailyFavouriteBaseException):
         super().__init__(500, message, context)
 
 
+class DailyFavouriteUserAlreadyInGroup(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "User is already within this group."
+        context = {}
+        super().__init__(500, message, context)
+
+
+class DailyFavouritePrivateGroupMustContainPassword(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "Could not create Group, because not password was set."
+        context = {}
+        super().__init__(500, message, context)
+
+
 class DailyFavouriteMaxPostsPerDayReached(DailyFavouriteBaseException):
 
     def __init__(self, group_id, max_posts):
