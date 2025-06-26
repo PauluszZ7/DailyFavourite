@@ -3,49 +3,116 @@
 {% block content %}
 <div class="container mt-4">
   <h2>Post erstellen</h2>
+
+  <!-- Formular mit Validierung -->
   <form id="postForm">
-    <!-- Musiksuchfeld -->
+    <!-- Gruppen-Auswahl -->
     <div class="mb-3">
-      <label>Musik suchen</label>
-      <input type="text" id="music_search" class="form-control" placeholder="Song suchen...">
-      <input type="hidden" id="music_id" name="music_id">
-      <div id="search_results" class="list-group mt-2"></div>
+      <label for="group_id" class="form-label">Gruppe*</label>
+      <select class="form-select" id="group_id" name="group_id" required>
+        <option value="">-- Bitte wählen --</option>
+        {% for group in groups %}
+          <option value="{{ group.id }}">{{ group.name }}</option>
+        {% endfor %}
+      </select>
     </div>
+
+    <!-- Spotify-Suche -->
+    <div class="mb-3">
+      <label for="music_search" class="form-label">Musik*</label>
+      <input type="text" 
+             class="form-control" 
+             id="music_search" 
+             placeholder="Song suchen..." 
+             autocomplete="off"
+             required>
+      <input type="hidden" id="music_id" name="music_id">
+      <div id="search_results" class="list-group mt-2 d-none"></div> <!-- Ergebnisse (initial versteckt) -->
+      <div class="invalid-feedback">Bitte wähle einen Song aus</div>
+    </div>
+
     <button type="submit" class="btn btn-primary">Posten</button>
   </form>
 </div>
 
 <script>
-  // 1. Live Search
-  document.getElementById('music_search').addEventListener('input', async (e) => {
+  // ========== LIVE-SUCHE ========== //
+  document.getElementById("music_search").addEventListener("input", async (e) => {
     const query = e.target.value.trim();
-    if (query.length < 2) return;
+    const resultsDiv = document.getElementById("search_results");
+    
+    if (query.length < 2) {
+      resultsDiv.classList.add("d-none");
+      return;
+    }
 
-    const response = await fetch(`/api/search/spotify/?q=${query}`);
+    // Spotify-API abfragen
+    const response = await fetch(`/api/search/spotify/?q=${encodeURIComponent(query)}`);
     const tracks = await response.json();
     
-    const results = document.getElementById('search_results');
-    results.innerHTML = tracks.map(track => `
-      <a href="#" class="list-group-item" 
-         onclick="document.getElementById('music_search').value='${track.name} - ${track.artist}';
-                  document.getElementById('music_id').value='${track.id}';
-                  this.parentNode.innerHTML=''">
-        ${track.name} — ${track.artist}
-      </a>
-    `).join('');
+    // Ergebnisse anzeigen
+    if (tracks.length > 0) {
+      resultsDiv.innerHTML = tracks.map(track => `
+        <a href="#" class="list-group-item list-group-item-action" 
+           data-id="${track.id}"
+           onclick="
+             document.getElementById('music_search').value = '${track.name} - ${track.artist}';
+             document.getElementById('music_id').value = '${track.id}';
+             this.parentNode.classList.add('d-none');
+             document.getElementById('music_search').classList.remove('is-invalid');
+           ">
+          ${track.name} <small class="text-muted">${track.artist}</small>
+        </a>
+      `).join("");
+      resultsDiv.classList.remove("d-none");
+    } else {
+      resultsDiv.innerHTML = '<div class="list-group-item">Keine Ergebnisse</div>';
+    }
   });
 
-  // 2. Form submit
-  document.getElementById('postForm').addEventListener('submit', async (e) => {
+  // ========== FORMULAR-VALIDIERUNG ========== //
+  document.getElementById("postForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    await fetch("{% url 'create-post' %}", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        music_id: document.getElementById('music_id').value
-      })
-    });
-    alert("Post erstellt!");
+    const form = e.target;
+    
+    // Pflichtfelder prüfen
+    if (!document.getElementById("music_id").value) {
+      document.getElementById("music_search").classList.add("is-invalid");
+      return;
+    }
+
+    // Formular absenden
+    try {
+      const response = await fetch("{% url 'create-post' %}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          group_id: document.getElementById("group_id").value,
+          music_id: document.getElementById("music_id").value
+        })
+      });
+
+      if (response.ok) {
+        alert("Post erfolgreich erstellt!");
+        form.reset();
+      } else {
+        const error = await response.json();
+        alert(`Fehler: ${error.error || "Unbekannter Fehler"}`);
+      }
+    } catch (error) {
+      alert("Netzwerkfehler: " + error.message);
+    }
   });
 </script>
+
+<style>
+  #search_results {
+    max-height: 300px;
+    overflow-y: auto;
+    position: absolute;
+    z-index: 1000;
+    width: calc(100% - 30px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  }
+</style>
 {% endblock %}
