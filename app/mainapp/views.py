@@ -8,6 +8,7 @@ from mainapp.services.userManagement import UserManagement
 from .models import Group, UserMeta
 from django.utils import timezone
 from django.contrib import messages
+from .objects.dtos import UserDTO
 
 
 # FRONTEND
@@ -90,8 +91,18 @@ def registration_view(request):
         data = json.loads(request.body)
         username = data.get("username")
         password = data.get("password")
+        favorite_artist = data.get("favorite_artist")
+        favorite_genre = data.get("favorite_genre")
 
-        UserManagement(request).register(username, password)
+        dto = UserDTO(
+            id=None,
+            username=username,
+            profile_picture=None,
+            favorite_artist=favorite_artist,
+            favorite_genre=favorite_genre,
+        )
+
+        UserManagement(request).register(username, password, dto)
         return JsonResponse({"redirect_url": reverse("login")})
 
     return JsonResponse({"error": "Nur POST erlaubt"}, status=400)
