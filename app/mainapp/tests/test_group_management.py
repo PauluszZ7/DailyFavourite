@@ -10,7 +10,10 @@ from mainapp.services.database import DatabaseManagement
 from mainapp.services.userManagement import UserManagement
 from mainapp.objects.dtos import UserDTO, GroupDTO, PostDTO
 from mainapp.objects.dto_enums import DTOEnum
-from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
+from mainapp.objects.exceptions import (
+    DailyFavouriteDBObjectNotFound,
+    DailyFavouriteMaxPostsPerDayReached,
+)
 from mainapp.tests.helpers import create_dummy_instance
 
 USERNAME = "testuser"
@@ -62,7 +65,6 @@ class TestGroupManagement:
         with pytest.raises(DailyFavouriteDBObjectNotFound):
             group_management.getGroup(created_group.id)
 
-
     def test_list_groups(self, simRequest):
         user = UserManagement(simRequest).getCurrentUser()
         assert user is not None
@@ -73,16 +75,21 @@ class TestGroupManagement:
         group_management.createGroup(new_group)
 
         new_group = create_dummy_instance(GroupDTO)
+        new_group.id = 130
         group_management.createGroup(new_group)
 
-        groups = group_management.listGroups()
+        groups_all = group_management.listGroups(True)
+        groups_no_archive = group_management.listGroups()
 
-        assert isinstance(groups, list)
+        assert isinstance(groups_all, list)
         assert (
-            len(groups) == 3
+            len(groups_all) == 3
         )  # +1 für archive group (testet daher auch die erstellung dieser Gruppe gleich mit.)
-        assert isinstance(groups[0], GroupDTO)
-        assert isinstance(groups[1], GroupDTO)
+        assert isinstance(groups_all[0], GroupDTO)
+        assert isinstance(groups_all[1], GroupDTO)
+        assert isinstance(groups_no_archive, list)
+        assert len(groups_no_archive) == len(groups_all) - 1
+        assert isinstance(groups_no_archive[0], GroupDTO)
 
     def test_list_groups_where_user_is_member(self, simRequest, secondSimUser):
         user = UserManagement(simRequest).getCurrentUser()
@@ -187,6 +194,7 @@ class TestGroupManagement:
         group_management = GroupManagement(user)
         group = create_dummy_instance(GroupDTO)
         group.id = 123
+        group.max_posts_per_day = -1
         group_management.createGroup(group)
 
         posts_before = len(Post.objects.all())
@@ -219,21 +227,38 @@ class TestGroupManagement:
 
     def test_admin_permissions(self, simRequest, secondSimUser):
         user = UserManagement(simRequest).getCurrentUser()
-        assert user is not None 
+        assert user is not None
 
         group_management = GroupManagement(user)
         group = create_dummy_instance(GroupDTO)
         group.id = 123
         group_management.createGroup(group)
 
-        test_user = user.objects.create_user(username="testuser", password="testpassword")
-        test_user_dto = DatabaseManagement(None).get_or_create(
-            UserDTO(test_user.id, test_user.username, None, None, None), DTOEnum.USER
-        )
-        testuser_
+        pass
 
     def test_post_permissions(self, simRequest, secondSimUser):
         pass
 
     def test_max_post_per_day(self, simRequest):
-        pass
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group.max_posts_per_day = 2
+        group_management.createGroup(group)
+
+        post = create_dummy_instance(PostDTO)
+        post.id = 122352
+        post.group = group
+        group_management.createPost(post)
+        post2 = create_dummy_instance(PostDTO)
+        post2.id = 44
+        post2.group = group
+        group_management.createPost(post2)
+
+        with pytest.raises(DailyFavouriteMaxPostsPerDayReached):
+            post2.id = 44
+            post2.group = group
+            group_management.createPost(post2)

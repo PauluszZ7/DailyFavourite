@@ -84,6 +84,11 @@ class DatabaseManagement:
         dtos = [type.getDTO()(**data) for data in serialized.data]
         return dtos
 
+    def list_all(self, type: DTOEnum) -> List[ModelDTO]:
+        objs = type.getModel().objects.all()
+        serialized = type.getSerializer()(objs, many=True)
+        return [type.getDTO()(**data) for data in serialized.data]
+
     def delete(self, dto: ModelDTO, type: DTOEnum) -> None:
         type.getModel().objects.filter(id=dto.id).delete()
 

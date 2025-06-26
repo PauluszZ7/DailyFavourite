@@ -1,10 +1,11 @@
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 
 from mainapp.objects.exceptions import (
     DailyFavouriteDBObjectNotFound,
     DailyFavouriteDBWrongObjectType,
+    DailyFavouriteMaxPostsPerDayReached,
 )
 from mainapp.objects.dtos import UserDTO, GroupDTO, PostDTO, MembershipDTO, RoleEnum
 from mainapp.objects.dto_enums import DTOEnum
@@ -23,6 +24,7 @@ class GroupManagement:
 
     def __init__(self, user: UserDTO) -> None:
         self.user = user
+        self.createPrivateArchiveGroupIfNotExists()
 
     def getGroup(self, id: int) -> GroupDTO:
         obj = DatabaseManagement(self.user).get(id, DTOEnum.GROUP)
@@ -32,11 +34,30 @@ class GroupManagement:
             return obj
         raise DailyFavouriteDBWrongObjectType(GroupDTO, type(obj))
 
-    def listGroups(self) -> List[GroupDTO]:
+    def listGroups(self, show_archives: bool = False) -> List[GroupDTO]:
         try:
-            return DatabaseManagement(self.user).list(True, DTOEnum.GROUP, "is_public")
-        except DailyFavouriteDBObjectNotFound:
-            return []
+            if show_archives:
+                return DatabaseManagement(self.user).list_all(DTOEnum.GROUP)
+
+            memberships = DatabaseManagement(self.user).list(
+                "archive_viewer", DTOEnum.MEMBERSHIP, "role"
+            )
+            archive_groups = []
+            groups_without_archive = []
+
+            for m in memberships:
+                archive_groups.append(
+                    DatabaseManagement(self.user).get(m.group, DTOEnum.GROUP)
+                )
+            groups = DatabaseManagement(self.user).list_all(DTOEnum.GROUP)
+
+            for g in groups:
+                if g not in archive_groups:
+                    groups_without_archive.append(g)
+
+            return groups_without_archive
+        except DailyFavouriteDBObjectNotFound as e:
+            raise e
 
     def listGroupsWhereUserIsMember(self) -> List[GroupDTO]:
         try:
@@ -50,7 +71,8 @@ class GroupManagement:
         for m in memberships:
             if type(m) is not MembershipDTO:
                 raise DailyFavouriteDBWrongObjectType(MembershipDTO, type(m))
-            groups.append(DatabaseManagement(self.user).get(m.group, DTOEnum.GROUP))
+            if m.role != RoleEnum.ARCHIVE_VIEWER.value:
+                groups.append(DatabaseManagement(self.user).get(m.group, DTOEnum.GROUP))
         return groups
 
     def createGroup(self, group: GroupDTO) -> None:
@@ -183,13 +205,11 @@ class GroupManagement:
                 return
 
     def createPost(self, post: PostDTO) -> None:
-        MAXPOSTSPERDAY = post.group.max_posts_per_day
-        if MAXPOSTSPERDAY > 0:
-            posts_today = PostManagement(self.user).countPostsToday(post.group)
-            if posts_today >= MAXPOSTSPERDAY:
-                raise PermissionError(
-                    f"Maximum number of posts per day ({MAXPOSTSPERDAY}) reached."
-                )
+        max_posts = post.group.max_posts_per_day
+        if max_posts > 0:
+            posts_today = self._count_todays_posts(post.group)
+            if posts_today >= max_posts:
+                raise DailyFavouriteMaxPostsPerDayReached(post.group.id, max_posts)
         if (
             post.group.post_permission == "admin"
             and post.group.admin.id != self.user.id
@@ -220,13 +240,14 @@ class GroupManagement:
             )
             for m in memberships:
                 if m.user == self.user.id:
-                    return None
+                    return
         except DailyFavouriteDBObjectNotFound:
             pass
 
+        name_id = str(uuid.uuid4())
         archive = GroupDTO(
             id=None,
-            name=str(uuid.uuid4()),
+            name=name_id,
             created_at=datetime.now(),
             description=self._get_archive_name(),
             profile_image=None,
@@ -240,6 +261,14 @@ class GroupManagement:
         )
 
         DatabaseManagement(self.user).get_or_create(archive, DTOEnum.GROUP)
+        # 1.5h debugging für diese kacke hier
+        archive = DatabaseManagement(self.user).list_all(DTOEnum.GROUP)
+        for a in archive:
+            if a.name == name_id:
+                archive = a
+                break
+        if isinstance(archive, list):
+            raise DailyFavouriteDBObjectNotFound(DTOEnum.GROUP, name_id)
 
         membership = MembershipDTO(None, self.user, archive, RoleEnum.ARCHIVE_VIEWER)
         DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
@@ -248,7 +277,6 @@ class GroupManagement:
         """
         Fügt den Post zusätzlich zur persönlichen Archivgruppe des Users hinzu.
         """
-        self.createPrivateArchiveGroupIfNotExists()
 
         try:
             memberships = DatabaseManagement(self.user).list(
@@ -278,3 +306,21 @@ class GroupManagement:
 
     def _get_archive_name(self) -> str:
         return f"archive-{self.user.id}"
+
+    def _count_todays_posts(self, group: GroupDTO) -> int:
+        try:
+            user_posts = DatabaseManagement(self.user).list(
+                self.user.id, DTOEnum.POST, "user_id"
+            )
+        except DailyFavouriteDBObjectNotFound:
+            return 0
+
+        todays_posts = 0
+
+        for post in user_posts:
+            if post.group == group.id and datetime.fromisoformat(
+                post.posted_at
+            ) >= datetime.today() - timedelta(days=1):
+                todays_posts += 1
+
+        return todays_posts

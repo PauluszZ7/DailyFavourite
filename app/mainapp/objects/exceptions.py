@@ -57,6 +57,14 @@ class DailyFavouriteAlreadyVotedForPost(DailyFavouriteBaseException):
         super().__init__(500, message, context)
 
 
+class DailyFavouriteMaxPostsPerDayReached(DailyFavouriteBaseException):
+
+    def __init__(self, group_id, max_posts):
+        message = "User has reached maximum amount of allowed posts per day."
+        context = {"group_id": group_id, "max_posts": max_posts}
+        super().__init__(403, message, context)
+
+
 class DailyFavouriteDBObjectNotFound(DailyFavouriteBaseException):
 
     def __init__(self, type, id) -> None:
