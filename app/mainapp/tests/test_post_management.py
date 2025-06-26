@@ -10,7 +10,7 @@ from mainapp.services.userManagement import UserManagement
 from mainapp.services.PostManagement import PostManagement
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.dtos import CommentDTO, PostDTO, GroupDTO, UserDTO
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.objects.exceptions import (
     DailyFavouriteAlreadyVotedForPost,
     DailyFavouriteDBObjectNotFound,
@@ -84,9 +84,13 @@ class TestPostManagement:
             created_at=TEST_DATE,
             description="TestDescription",
             is_public=True,
+            password=None,
             max_posts_per_day=1,
             read_permission="all",
             post_permission="all",
+            profile_image=None,
+            genre=None,
+            admin=user,
         )
         simPost1.group = group
         simPost2.group = group

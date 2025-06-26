@@ -1,4 +1,4 @@
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
 from mainapp.objects.dtos import ModelDTO
@@ -88,10 +88,15 @@ class TestDatabase:
 
         fieldname, value = get_first_test_field_and_value(test_object)
         dto_objects = dbm.list(value, dto_type, fieldname)
+        dto_all_objects = dbm.list_all(dto_type)
 
         assert len(dto_objects) == 2
         assert type(dto_objects[0]) is dto_type.getDTO()
         assert type(dto_objects[1]) is dto_type.getDTO()
+
+        assert len(dto_all_objects) == 2
+        assert type(dto_all_objects[0]) is dto_type.getDTO()
+        assert type(dto_all_objects[1]) is dto_type.getDTO()
 
         assert dto_objects[0].id == object_id or dto_objects[0].id == str(object_id)
         assert dto_objects[1].id == object_id + 1 or dto_objects[1].id == str(

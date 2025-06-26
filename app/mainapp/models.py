@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class UserMeta(models.Model):
@@ -36,7 +37,11 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(null=True, blank=True)
     is_public = models.BooleanField(default=True)
+    password = models.CharField(max_length=50, null=True, blank=True)
     max_posts_per_day = models.IntegerField(default=1)
+    genre = models.CharField(max_length=50, null=True, blank=True)
+    admin = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
+    profile_image = models.CharField(max_length=200, null=True, blank=True)
     post_permission = models.CharField(max_length=50)
     read_permission = models.CharField(max_length=50)
 
@@ -45,6 +50,14 @@ class Membership(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
+
+    ROLE_CHOICES = [
+        ("owner", "Owner"),
+        ("moderator", "Moderator"),
+        ("member", "Member"),
+        ("archive_viewer", "Archive Viewer"),
+    ]
+    role = models.CharField(max_length=30, choices=ROLE_CHOICES, default="member")
 
     class Meta:
         unique_together = ("user", "group")
@@ -65,7 +78,7 @@ class Post(models.Model):
     user = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
     music = models.ForeignKey(Music, on_delete=models.CASCADE)
-    posted_at = models.DateTimeField(auto_now_add=True)
+    posted_at = models.DateTimeField(default=timezone.now)
 
 
 class Comment(models.Model):

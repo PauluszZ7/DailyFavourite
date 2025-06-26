@@ -23,16 +23,20 @@ class GroupSerializer(serializers.ModelSerializer):
             "created_at",
             "description",
             "is_public",
+            "password",
             "max_posts_per_day",
             "post_permission",
             "read_permission",
+            "profile_image",
+            "genre",
+            "admin",
         ]
 
 
 class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
-        fields = ["id", "user", "group"]
+        fields = ["id", "user", "group", "role"]
 
 
 class MusicSerializer(serializers.ModelSerializer):
