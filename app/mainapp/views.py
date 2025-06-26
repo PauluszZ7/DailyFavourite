@@ -201,3 +201,11 @@ def delete_group_view(request, group_id):
 
     messages.warning(request, 'Ungültige Anfrage.')
     return redirect('group-edit', group_id=group_id)
+
+
+def homepage_view(request):
+    json_path = os.path.join(os.path.dirname(__file__), 'test_posts.json')
+    with open(json_path, 'r', encoding='utf-8') as f:
+        posts = json.load(f)
+
+    return render(request, 'homepage.html', {'posts': posts})

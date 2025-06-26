@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Startseite | DailyFavourite{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <a href="{% url 'my-groups' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-people"></i> Gruppen verwalten
+    </a>
+
+    <div class="text-center flex-grow-1 fs-4">
+        <a href="{% url 'friends' %}" class="fw-bold me-2 {% if active_feed == 'friends' %}text-primary{% endif %}">Freundesliste</a>
+        |
+        <a href="{% url 'my-groups' %}" class="fw-bold ms-2 {% if active_feed == 'groups' %}text-primary{% endif %}">Gruppen</a>
+    </div>
+
+    <a href="/profile/" class="btn btn-outline-secondary">
+        <i class="bi bi-person"></i> Profil
+    </a>
+</div>
+
+{% include 'feeds/feed.html' %}
+
+{% endblock %}

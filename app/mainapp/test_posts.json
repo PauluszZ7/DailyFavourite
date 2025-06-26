@@ -1,0 +1,100 @@
+[
+  {
+    "id": 1,
+    "user": {
+      "id": 1,
+      "username": "testuser1",
+      "profile_picture": null,
+      "favorite_artist": "Radiohead",
+      "favorite_genre": "Rock"
+    },
+    "group": {
+      "id": 1,
+      "name": "Indie Fans",
+      "created_at": "2024-01-01T00:00:00",
+      "description": "Gruppe für Indie-Liebhaber",
+      "is_public": true,
+      "max_posts_per_day": false,
+      "post_permission": "everyone",
+      "read_permission": "everyone"
+    },
+    "music": {
+      "id": 1,
+      "name": "Paranoid Android",
+      "artist": "Radiohead",
+      "album": "OK Computer",
+      "image_url": "https://example.com/image1.jpg",
+      "preview_url": "https://example.com/preview1.mp3",
+      "song_url": "https://example.com/song1.mp3"
+    },
+    "posted_at": "2025-06-10T12:00:00",
+    "comments": [
+      {
+        "id": 1,
+        "user": {
+          "id": 2,
+          "username": "testuser2",
+          "profile_picture": null,
+          "favorite_artist": "Beyoncé",
+          "favorite_genre": "Pop"
+        },
+        "content": "Mega Song!",
+        "created_at": "2025-06-10T12:30:00"
+      }
+    ],
+    "votes": {
+      "upvotes": 5,
+      "downvotes": 2,
+      "differenz": 3
+    }
+  },
+  {
+    "id": 2,
+    "user": {
+      "id": 2,
+      "username": "testuser2",
+      "profile_picture": null,
+      "favorite_artist": "Beyoncé",
+      "favorite_genre": "Pop"
+    },
+    "group": {
+      "id": 2,
+      "name": "Pop Lovers",
+      "created_at": "2023-06-15T00:00:00",
+      "description": "Hier dreht sich alles um Popmusik",
+      "is_public": false,
+      "max_posts_per_day": true,
+      "post_permission": "members",
+      "read_permission": "members"
+    },
+    "music": {
+      "id": 2,
+      "name": "Halo",
+      "artist": "Beyoncé",
+      "album": "I Am... Sasha Fierce",
+      "image_url": "https://example.com/image2.jpg",
+      "preview_url": "https://example.com/preview2.mp3",
+      "song_url": "https://example.com/song2.mp3"
+    },
+    "posted_at": "2025-06-10T12:00:00",
+    "comments": [
+      {
+        "id": 2,
+        "user": {
+          "id": 1,
+          "username": "testuser1",
+          "profile_picture": null,
+          "favorite_artist": "Radiohead",
+          "favorite_genre": "Rock"
+        },
+        "content": "Klassiker!",
+        "created_at": "2025-06-10T12:45:00"
+      }
+    ],
+    "votes": {
+      "upvotes": 10,
+      "downvotes": 1,
+      "differenz": 9
+    }
+  }
+]

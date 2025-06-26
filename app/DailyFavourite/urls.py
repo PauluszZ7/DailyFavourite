@@ -36,11 +36,12 @@ from mainapp.views import (
     my_groups_view,
     edit_group_view,
     delete_group_view,
+    homepage_view,
 )
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", mainPage_view, name="home"),
+    path("", homepage_view, name="home"),
     path("login/", loginPage_view, name="login"),
     path("registration/", registrationPage_view, name="registration"),
     path("mainfeed/", mainfeedPage_view, name="mainfeed"),
