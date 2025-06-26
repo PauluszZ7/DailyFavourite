@@ -4,7 +4,8 @@ from django.test import RequestFactory
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
 
-from mainapp.models import Post
+from mainapp.objects.enums import RoleEnum
+from mainapp.models import Membership, Post
 from mainapp.services.GroupManagement import GroupManagement
 from mainapp.services.database import DatabaseManagement
 from mainapp.services.userManagement import UserManagement
@@ -13,6 +14,7 @@ from mainapp.objects.dto_enums import DTOEnum
 from mainapp.objects.exceptions import (
     DailyFavouriteDBObjectNotFound,
     DailyFavouriteMaxPostsPerDayReached,
+    DailyFavouriteUnallowedRoleAssignment,
 )
 from mainapp.tests.helpers import create_dummy_instance
 
@@ -206,6 +208,34 @@ class TestGroupManagement:
         assert len(members) == 1
         assert members[0].id == user.id
 
+    def test_update_role_of_user(self, simRequest, secondSimUser):
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group_management.createGroup(group)
+        GroupManagement(secondSimUser).joinGroup(group)
+
+        members = group_management.getMembers(group)
+        assert len(members) == 2
+
+        membership = Membership.objects.get(user_id=secondSimUser.id, group_id=group.id)
+        assert membership.role == RoleEnum.MEMBER
+
+        group_management.changeUserRole(group, secondSimUser, RoleEnum.MODERATOR)
+        membership = Membership.objects.get(user_id=secondSimUser.id, group_id=group.id)
+        assert membership.role == RoleEnum.MODERATOR
+
+        with pytest.raises(DailyFavouriteUnallowedRoleAssignment):
+            group_management.changeUserRole(group, secondSimUser, RoleEnum.OWNER)
+
+        with pytest.raises(DailyFavouriteUnallowedRoleAssignment):
+            group_management.changeUserRole(
+                group, secondSimUser, RoleEnum.ARCHIVE_VIEWER
+            )
+
     def test_create_sync_delete_Posts(self, simRequest):
         user = UserManagement(simRequest).getCurrentUser()
         assert user is not None
@@ -251,28 +281,197 @@ class TestGroupManagement:
             len(archive_post_after) == len(archive_post_before) - 1
         )  # check Archive Post got deleted
 
-    def test_moderator_permissions(self, simRequest, secondSimUser):
+    @pytest.mark.parametrize("is_allowed", [True, False])
+    def test_moderator_permissions(self, simRequest, secondSimUser, is_allowed):
         # posten (nur mit postpermissions)
         # löschen (nur mit postpermissions)
         # remove user
 
         # nicht
+        # user roles ändern
         # gruppe updaten
         # gruppe löschen
-        pass
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
 
-    def test_member_permissions(self, simRequest, secondSimUser):
+        other_user = DatabaseManagement(None).get_or_create(
+            UserDTO(3, "other2", None, None, None), DTOEnum.USER
+        )
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group.max_posts_per_day = -1
+        if is_allowed:
+            group.post_permission = RoleEnum.MODERATOR.value
+        else:
+            group.post_permission = RoleEnum.OWNER.value
+        group_management.createGroup(group)
+
+        gm = GroupManagement(secondSimUser)
+        gm.joinGroup(group)
+
+        group_management.changeUserRole(group, secondSimUser, RoleEnum.MODERATOR)
+        gm = GroupManagement(secondSimUser)
+        GroupManagement(other_user).joinGroup(group)
+        post = create_dummy_instance(PostDTO)
+        post.id = 44
+        post.group = group
+        group_management.createPost(post)
+
+        post2 = create_dummy_instance(PostDTO)
+        post2.id = 44
+        post2.group = group
+
+        # Tests
+        if is_allowed:
+            gm.createPost(post2)
+            gm.deletePost(post2)
+            gm.deletePost(post)
+        else:
+            with pytest.raises(PermissionError):
+                gm.createPost(post2)
+            group_management.createPost(post2)
+            with pytest.raises(PermissionError):
+                gm.deletePost(post2)
+            with pytest.raises(PermissionError):
+                gm.deletePost(post)
+
+        with pytest.raises(PermissionError):
+            gm.changeUserRole(group, other_user, RoleEnum.MODERATOR)
+
+        with pytest.raises(PermissionError):
+            group2 = group
+            group2.description = "Eine andere Beschreibung"
+            gm.updateGroup(group2)
+
+        with pytest.raises(PermissionError):
+            gm.deleteGroup(group)
+
+        gm.removeUserFromGroup(group, other_user)
+
+    @pytest.mark.parametrize("is_allowed", [True, False])
+    def test_member_permissions(self, simRequest, secondSimUser, is_allowed):
         # NICHT
         # gruppe updaten
         # gruppe löschen
         # remove user
+        # user roles ändern
 
         # löschen (nur wenn eigener)
         # posten (nur wenn post permissions)
-        pass
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        other_user = DatabaseManagement(None).get_or_create(
+            UserDTO(3, "other2", None, None, None), DTOEnum.USER
+        )
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group.max_posts_per_day = -1
+        if is_allowed:
+            group.post_permission = RoleEnum.MEMBER.value
+        else:
+            group.post_permission = RoleEnum.OWNER.value
+
+        group_management.createGroup(group)
+
+        gm = GroupManagement(secondSimUser)
+        gm.joinGroup(group)
+
+        GroupManagement(other_user).joinGroup(group)
+        group_management.changeUserRole(group, secondSimUser, RoleEnum.MEMBER)
+        gm = GroupManagement(secondSimUser)
+        post = create_dummy_instance(PostDTO)
+        post.id = 44
+        post.group = group
+        group_management.createPost(post)
+
+        post2 = create_dummy_instance(PostDTO)
+        post2.id = 44
+        post2.group = group
+
+        # Tests
+        if is_allowed:
+            gm.createPost(post2)
+            gm.deletePost(post2)
+            with pytest.raises(PermissionError):
+                gm.deletePost(post)
+        else:
+            with pytest.raises(PermissionError):
+                gm.createPost(post2)
+            group_management.createPost(post2)
+            with pytest.raises(PermissionError):
+                gm.deletePost(post2)
+            with pytest.raises(PermissionError):
+                gm.deletePost(post)
+
+        with pytest.raises(PermissionError):
+            gm.changeUserRole(group, other_user, RoleEnum.MODERATOR)
+
+        with pytest.raises(PermissionError):
+            group2 = group
+            group2.description = "Eine andere Beschreibung"
+            gm.updateGroup(group2)
+
+        with pytest.raises(PermissionError):
+            gm.deleteGroup(group)
+
+        with pytest.raises(PermissionError):
+            gm.removeUserFromGroup(group, other_user)
 
     def test_user_not_in_group(self, simRequest, secondSimUser):
-        pass
+        user = UserManagement(simRequest).getCurrentUser()
+        assert user is not None
+
+        other_user = DatabaseManagement(None).get_or_create(
+            UserDTO(3, "other2", None, None, None), DTOEnum.USER
+        )
+
+        group_management = GroupManagement(user)
+        group = create_dummy_instance(GroupDTO)
+        group.id = 123
+        group.max_posts_per_day = -1
+        group.post_permission = RoleEnum.MEMBER.value
+
+        group_management.createGroup(group)
+
+        gm = GroupManagement(secondSimUser)
+
+        GroupManagement(other_user).joinGroup(group)
+        post = create_dummy_instance(PostDTO)
+        post.id = 44
+        post.group = group
+        group_management.createPost(post)
+
+        post2 = create_dummy_instance(PostDTO)
+        post2.id = 44
+        post2.group = group
+
+        # Tests
+        with pytest.raises(PermissionError):
+            gm.createPost(post2)
+        group_management.createPost(post2)
+        with pytest.raises(PermissionError):
+            gm.deletePost(post2)
+        with pytest.raises(PermissionError):
+            gm.deletePost(post)
+
+        with pytest.raises(PermissionError):
+            gm.changeUserRole(group, other_user, RoleEnum.MODERATOR)
+
+        with pytest.raises(PermissionError):
+            group2 = group
+            group2.description = "Eine andere Beschreibung"
+            gm.updateGroup(group2)
+
+        with pytest.raises(PermissionError):
+            gm.deleteGroup(group)
+
+        with pytest.raises(PermissionError):
+            gm.removeUserFromGroup(group, other_user)
 
     def test_max_post_per_day(self, simRequest):
         user = UserManagement(simRequest).getCurrentUser()

@@ -81,6 +81,16 @@ class DailyFavouriteMaxPostsPerDayReached(DailyFavouriteBaseException):
         super().__init__(403, message, context)
 
 
+class DailyFavouriteUnallowedRoleAssignment(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = (
+            "You are not allowed to change the userroles to: admin, archive_viewer"
+        )
+        context = {}
+        super().__init__(500, message, context)
+
+
 class DailyFavouriteDBObjectNotFound(DailyFavouriteBaseException):
 
     def __init__(self, type, id) -> None:
