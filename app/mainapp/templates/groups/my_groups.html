@@ -58,38 +58,96 @@
 
 
 <script>
-  document.getElementById("group_search").addEventListener("input", async (e) => {
-    const query = e.target.value.trim();
-    const resultsDiv = document.getElementById("search_results");
-    
-    if (query.length < 2) {
-      resultsDiv.classList.add("d-none");
-      return;
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.getElementById("group_search").addEventListener("input", async (e) => {
+  const query = e.target.value.trim();
+  const resultsDiv = document.getElementById("search_results");
+
+  if (query.length < 2) {
+    resultsDiv.classList.add("d-none");
+    return;
+  }
+
+  const response = await fetch(`/api/search/group/?q=${encodeURIComponent(query)}`);
+  const groups = await response.json();
+
+  resultsDiv.innerHTML = ''; // leeren
+
+  groups.forEach(group => {
+    const wrapper = document.createElement('div');
+    wrapper.className = "list-group-item";
+
+    const label = document.createElement('div');
+    label.textContent = `${group.is_public ? '(Öffentlich)' : '(Privat)'} ${group.name}`;
+    wrapper.appendChild(label);
+
+    const joinBtn = document.createElement('button');
+    joinBtn.textContent = "Beitreten";
+    joinBtn.className = "btn btn-outline-success btn-sm";
+
+    const formData = new FormData();
+    formData.append("id", group.id);
+
+    if (!group.is_public) {
+      const row = document.createElement('div');
+      row.className = "d-flex justify-content-end align-items-center gap-2 mt-2";
+
+      const passwordInput = document.createElement('input');
+      passwordInput.type = "password";
+      passwordInput.placeholder = "Passwort";
+      passwordInput.className = "form-control form-control-sm";
+      passwordInput.style.maxWidth = "200px";
+
+      row.appendChild(passwordInput);
+      row.appendChild(joinBtn);
+      wrapper.appendChild(row);
+
+      joinBtn.onclick = async () => {
+        formData.set("password", passwordInput.value);
+        const res = await fetch("/friends/join/", {
+          method: "POST",
+          headers: { "X-CSRFToken": getCookie("csrftoken") },
+          body: formData
+        });
+        const result = await res.json();
+        alert(result.message);
+      };
+
+    } else {
+      const btnWrapper = document.createElement('div');
+      btnWrapper.className = "d-flex justify-content-end mt-2";
+      btnWrapper.appendChild(joinBtn);
+      wrapper.appendChild(btnWrapper);
+
+      joinBtn.onclick = async () => {
+        const res = await fetch("/friends/join/", {
+          method: "POST",
+          headers: { "X-CSRFToken": getCookie("csrftoken") },
+          body: formData
+        });
+        const result = await res.json();
+        alert(result.message);
+      };
     }
 
-    // Spotify-API abfragen
-    const response = await fetch(`/api/search/group/?q=${encodeURIComponent(query)}`);
-    const groups = await response.json();
-    
-    // Ergebnisse anzeigen
-    if (groups.length > 0) {
-      resultsDiv.innerHTML = groups.map(group => `
-  <a href="#" class="list-group-item list-group-item-action" 
-     data-id="${group.id}"
-     onclick="
-       document.getElementById('group_search').value = '${group.name}';
-       document.getElementById('group_id').value = '${group.id}';
-       this.parentNode.classList.add('d-none');
-     ">
-    <small class="text-muted">
-      ${group.is_public ? '(Öffentlich)' : '(Privat)'} ${group.name}
-    </small>
-  </a>
-`).join("");
-      resultsDiv.classList.remove("d-none");
-    } else {
-      resultsDiv.innerHTML = '<div class="list-group-item">Keine Ergebnisse</div>';
-    }
+    resultsDiv.appendChild(wrapper);
   });
+
+  resultsDiv.classList.remove("d-none");
+});
 </script>
 {% endblock %}
