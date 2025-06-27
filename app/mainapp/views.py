@@ -1,16 +1,17 @@
 import json
 import os
+
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
-from app.mainapp.objects.enums import RoleEnum
+
+# from mainapp.objects.enums import RoleEnum
 from mainapp.services.userManagement import UserManagement
-from .models import Group, UserMeta
+from mainapp.objects.dtos import UserDTO
+
 from django.utils import timezone
 from django.contrib import messages
-from .objects.dtos import UserDTO
-
 
 # FRONTEND
 @login_required
@@ -135,18 +136,18 @@ def friendsPage_view(request):
 
 @login_required
 def create_group_view(request):
-    user_meta = UserMeta.objects.get(id=request.user.id)
+    # user_meta = UserMeta.objects.get(id=request.user.id)
 
-    if request.method == "POST":
-        name = request.POST.get("name")
-        description = request.POST.get("description")
-        is_public = bool(request.POST.get("is_public"))
-        genre = request.POST.get("genre") or None
-        max_posts = int(request.POST.get("max_posts_per_day") or -1)
-        post_permission = request.POST.get("post_permission") or RoleEnum.MEMBER
-        read_permission = request.POST.get("read_permission") or RoleEnum.MEMBER
-        profile_image = request.FILES.get("profile_Image")
-        print(profile_image)
+    # if request.method == "POST":
+    #     name = request.POST.get("name")
+    #     description = request.POST.get("description")
+    #     is_public = bool(request.POST.get("is_public"))
+    #     genre = request.POST.get("genre") or None
+    #     max_posts = int(request.POST.get("max_posts_per_day") or -1)
+    #     post_permission = request.POST.get("post_permission") or RoleEnum.MEMBER
+    #     read_permission = request.POST.get("read_permission") or RoleEnum.MEMBER
+    #     profile_image = request.FILES.get("profile_Image")
+    #     print(profile_image)
 
         # group = Group.objects.create(
         #     name=name,
@@ -165,7 +166,7 @@ def create_group_view(request):
 
         return redirect("my-groups")
 
-    return render(request, "groups/create_group.html", {"group": Group()})
+    # return render(request, "groups/create_group.html", {"group": Group()})
 
 
 @login_required
