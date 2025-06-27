@@ -1,0 +1,79 @@
+{% for post in posts %}
+
+<div class="card mb-4 shadow-sm position-relative">
+    <!-- Vote buttons in the top right corner -->
+
+<div style="position: absolute; top: 60px; right: 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; z-index: 10;">
+  <!-- Upvote count -->
+  <span class="text-success fw-bold">{{ post.votes.upvotes }}</span>
+
+  <!-- Upvote -->
+  <form method="post" action="{% url 'vote' post.id 'up' %}" style="margin: 0;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-link p-0 text-success">
+      <i class="bi bi-caret-up-fill fs-4"></i>
+    </button>
+  </form>
+
+  <!-- Vote diff -->
+  <span class="fw-bold">{{ post.votes.differenz }}</span>
+
+  <!-- Downvote -->
+  <form method="post" action="{% url 'vote' post.id 'down' %}" style="margin: 0;">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-link p-0 text-danger">
+      <i class="bi bi-caret-down-fill fs-4"></i>
+    </button>
+  </form>
+
+  <!-- Downvote count -->
+  <span class="text-danger fw-bold">{{ post.votes.downvotes }}</span>
+</div>
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+    <strong>@{{ post.user.username }}</strong>
+    <small class="text-muted">{{ post.group.name }}</small>
+  </div>
+  <div class="card-body">
+    <h5 class="card-title">{{ post.music.name }}</h5>
+    <p class="card-subtitle text-muted mb-2">von {{ post.music.artist }} – {{ post.music.album }}</p>
+    <div style="text-align: center;">
+        <a href="{{ post.music.song_url }}" target="_blank">
+        <img src="{{ post.music.image_url }}" alt="Cover" class="img-fluid mb-1 rounded" style="width: 50%;">
+        </a>
+    </div>
+    {% if post.music.preview_url != null %}
+    <audio controls class="w-100 mb-3">
+      <source src="{{ post.music.preview_url }}" type="audio/mpeg">
+      Dein Browser unterstützt kein Audio.
+    </audio>
+    {% endif %}
+    {% if post.comments %}
+      <hr>
+      <h6>Kommentare</h6>
+      <ul class="list-unstyled">
+        {% for comment in post.comments %}
+          <li class="mb-1"><strong>@{{ comment.user.username }}</strong>: {{ comment.content }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+window.addEventListener("scroll", () => {
+  localStorage.setItem("scrollY", window.scrollY);
+});
+
+window.addEventListener("load", () => {
+  const scrollY = localStorage.getItem("scrollY");
+  if (scrollY !== null) {
+    window.scrollTo(0, parseInt(scrollY));
+    localStorage.removeItem("scrollY");
+  }
+});
+</script>
+
+  {% empty %}
+    <p>Keine Beiträge gefunden.</p>
+  {% endfor %}

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+{% csrf_token %}
+
+{% block content %}
+<div class="container mt-4">
+
+
+  <h2>Post erstellen</h2>
+
+  <!-- Formular mit Validierung -->
+  <form id="postForm">
+    <!-- Gruppen-Auswahl -->
+    <div class="mb-3">
+      <label for="group_id" class="form-label">Gruppe*</label>
+      <select class="form-select" id="group_id" name="group_id" required>
+        <option value="___private___12345___">Privater Post</option>
+        {% for group in groups %}
+          <option value="{{ group.id }}">{{ group.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <!-- Spotify-Suche -->
+    <div class="mb-3">
+      <label for="music_search" class="form-label">Musik*</label>
+      <input type="text" 
+             class="form-control" 
+             id="music_search" 
+             placeholder="Song suchen..." 
+             autocomplete="off"
+             required>
+      <input type="hidden" id="music_id" name="music_id">
+      <div id="search_results" class="list-group mt-2 d-none"></div> <!-- Ergebnisse (initial versteckt) -->
+      <div class="invalid-feedback">Bitte wähle einen Song aus</div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Posten</button>
+  </form>
+</div>
+
+<script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith(name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+  // ========== LIVE-SUCHE ========== //
+ document.getElementById("music_search").addEventListener("input", async (e) => {
+  const query = e.target.value.trim();
+  const resultsDiv = document.getElementById("search_results");
+
+  if (query.length < 2) {
+    resultsDiv.classList.add("d-none");
+    return;
+  }
+
+  const response = await fetch(`/api/search/spotify/?q=${encodeURIComponent(query)}`);
+  const tracks = await response.json();
+
+  resultsDiv.innerHTML = ''; // vorher leeren
+
+  if (tracks.length > 0) {
+    tracks.forEach(track => {
+      const displayValue = `${track.name} - ${track.artist}`;
+
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action';
+      a.dataset.id = track.id;
+      a.innerHTML = `${track.name} <small class="text-muted">${track.artist}</small>`;
+
+      a.addEventListener('click', (event) => {
+        event.preventDefault();
+        document.getElementById('music_search').value = displayValue;
+        document.getElementById('music_id').value = track.id;
+        resultsDiv.classList.add('d-none');
+        document.getElementById('music_search').classList.remove('is-invalid');
+      });
+
+      resultsDiv.appendChild(a);
+    });
+
+    resultsDiv.classList.remove("d-none");
+  } else {
+    resultsDiv.innerHTML = '<div class="list-group-item">Keine Ergebnisse</div>';
+  }
+}); 
+  // ========== FORMULAR-VALIDIERUNG ========== //
+  document.getElementById("postForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target;
+    
+    // Pflichtfelder prüfen
+    if (!document.getElementById("music_id").value) {
+      document.getElementById("music_search").classList.add("is-invalid");
+      return;
+    }
+
+    // Formular absenden
+    try {
+      const response = await fetch("{% url 'create-post' %}", {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
+        body: JSON.stringify({
+          group_id: document.getElementById("group_id").value,
+          music_id: document.getElementById("music_id").value
+        })
+      });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.redirect_url) {
+            window.location.href = data.redirect_url;
+          } else {
+            form.reset();
+          }
+        }
+       else {
+          const data = await response.json();
+          const alertDiv = document.createElement("div");
+          alertDiv.className = "alert alert-danger mt-3";
+          alertDiv.innerText = data.error || "Unbekannter Fehler";
+          form.parentNode.insertBefore(alertDiv, form);
+      }
+    } catch (error) {
+      alert("Netzwerkfehler: " + error.message);
+    }
+  });
+</script>
+
+<style>
+  #search_results {
+    max-height: 300px;
+    overflow-y: auto;
+    position: absolute;
+    z-index: 1000;
+    width: calc(100% - 30px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+  }
+</style>
+{% endblock %}

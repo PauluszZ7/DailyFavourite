@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Meine Gruppen{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Meine Gruppen</h2>
+    <a href="{% url 'group-create' %}" class="btn btn-primary">Gruppe erstellen</a>
+  </div>
+
+    <div class="mb-3">
+      <input type="text" 
+             class="form-control" 
+             id="group_search" 
+             placeholder="Gruppe suchen..." 
+             autocomplete="off"
+             required>
+      <input type="hidden" id="group_id" name="group_id">
+      <div id="search_results" class="list-group mt-2 d-none"></div>
+    </div>
+
+
+  {% if groups %}
+    <div class="list-group">
+      {% for group in groups %}
+        <div class="list-group-item d-flex align-items-start gap-3 flex-wrap" style="cursor: pointer;"
+        onclick="window.location.href='{% url 'group-feed' group.id %}'">
+
+          <img src="{% if group.profile_picture %}{{ group.profile_picture }}{% else %}/media/standards/group.jpg{% endif %}" alt="Profilbild" class="rounded-circle mb-3" style="width: 70px; height: 70px; object-fit: cover;">
+
+          <div class="flex-grow-1">
+            <h5 class="mb-1">{{ group.name }}</h5>
+            <small class="text-muted d-block">{{ group.description }}</small>
+            <small class="d-block mt-1">
+              <strong>Sichtbarkeit:</strong> {% if group.is_public %}Öffentlich{% else %}Privat{% endif %} |
+              <strong>Posten erlaubt für:</strong> {{ group.post_permission }} |
+              <strong>Lesen erlaubt für:</strong> {{ group.read_permission }}
+            </small>
+          </div>
+
+          <a href="{% url 'group-edit' group.id %}" class="ms-auto" title="Gruppeneinstellungen" style="color: inherit;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                 class="bi bi-gear" viewBox="0 0 16 16">
+              <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+              <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.54 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.54l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.54-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.69 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.69l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.69l.16.292c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.69 1.115l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.69-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291a1.873 1.873 0 0 0-1.115-2.69l-.318-.094c-.835-.246-.835-1.428 0-1.674l.319-.094a1.873 1.873 0 0 0 1.115-2.69l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.69-1.115l.094-.319z"/>
+            </svg>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>Du bist noch in keiner Gruppe.</p>
+  {% endif %}
+
+</div>
+
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+document.getElementById("group_search").addEventListener("input", async (e) => {
+  const query = e.target.value.trim();
+  const resultsDiv = document.getElementById("search_results");
+
+  if (query.length < 2) {
+    resultsDiv.classList.add("d-none");
+    return;
+  }
+
+  const response = await fetch(`/api/search/group/?q=${encodeURIComponent(query)}`);
+  const groups = await response.json();
+
+  resultsDiv.innerHTML = ''; // leeren
+
+  groups.forEach(group => {
+    const wrapper = document.createElement('div');
+    wrapper.className = "list-group-item";
+
+    const label = document.createElement('div');
+    label.textContent = `${group.is_public ? '(Öffentlich)' : '(Privat)'} ${group.name}`;
+    wrapper.appendChild(label);
+
+    const joinBtn = document.createElement('button');
+    joinBtn.textContent = "Beitreten";
+    joinBtn.className = "btn btn-outline-success btn-sm";
+
+    const formData = new FormData();
+    formData.append("id", group.id);
+
+    if (!group.is_public) {
+      const row = document.createElement('div');
+      row.className = "d-flex justify-content-end align-items-center gap-2 mt-2";
+
+      const passwordInput = document.createElement('input');
+      passwordInput.type = "password";
+      passwordInput.placeholder = "Passwort";
+      passwordInput.className = "form-control form-control-sm";
+      passwordInput.style.maxWidth = "200px";
+
+      row.appendChild(passwordInput);
+      row.appendChild(joinBtn);
+      wrapper.appendChild(row);
+
+      joinBtn.onclick = async () => {
+        formData.set("password", passwordInput.value);
+        const res = await fetch("/friends/join/", {
+          method: "POST",
+          headers: { "X-CSRFToken": getCookie("csrftoken") },
+          body: formData
+        });
+        const result = await res.json();
+        alert(result.message);
+      };
+
+    } else {
+      const btnWrapper = document.createElement('div');
+      btnWrapper.className = "d-flex justify-content-end mt-2";
+      btnWrapper.appendChild(joinBtn);
+      wrapper.appendChild(btnWrapper);
+
+      joinBtn.onclick = async () => {
+        const res = await fetch("/friends/join/", {
+          method: "POST",
+          headers: { "X-CSRFToken": getCookie("csrftoken") },
+          body: formData
+        });
+        const result = await res.json();
+        alert(result.message);
+      };
+    }
+
+    resultsDiv.appendChild(wrapper);
+  });
+
+  resultsDiv.classList.remove("d-none");
+});
+</script>
+{% endblock %}

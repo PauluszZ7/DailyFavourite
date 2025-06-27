@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4 text-center fw-bold">Freunde</h2>
+
+  <div class="mb-4 position-relative">
+    <input id="friend_search" type="text" class="form-control rounded-pill px-4 py-2"
+           placeholder="Freunde suchen..." autocomplete="off">
+    <div id="search_results" class="list-group position-absolute w-100 mt-2 d-none"
+         style="z-index: 10;"></div>
+  </div>
+
+  <div id="friends_container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+  </div>
+</div>
+ </br>
+
+<ul class="list-group">
+  {% for friend in friends %}
+    <li class="list-group-item d-flex justify-content-between align-items-center"
+        style="cursor: pointer;"
+        onclick="window.location.href='{% url 'other-profile' friend.id %}'">
+      {{ friend.username }}
+    </li>
+  {% endfor %}
+</ul>
+
+<script>
+  document.getElementById("friend_search").addEventListener("input", async (e) => {
+    const query = e.target.value.trim();
+    const resultsDiv = document.getElementById("search_results");
+
+    if (query.length < 2) {
+      resultsDiv.classList.add("d-none");
+      return;
+    }
+
+    const response = await fetch(`/friends/search/?q=${encodeURIComponent(query)}`);
+    const users = await response.json();
+
+    if (users.length > 0) {
+      resultsDiv.innerHTML = users.map(user => `
+        <a href="/profile/${user.id}" class="list-group-item list-group-item-action">
+          <strong>${user.username}</strong> <small class="text-muted">(${user.favorite_genre})</small>
+        </a>
+      `).join('');
+      resultsDiv.classList.remove("d-none");
+    } else {
+      resultsDiv.innerHTML = '<div class="list-group-item bg-dark text-white">Keine Ergebnisse</div>';
+    }
+  });
+
+  window.addEventListener("DOMContentLoaded", async () => {
+    const container = document.getElementById("friends_container");
+    const response = await fetch("/friends/");
+    const friends = await response.json();
+
+    container.innerHTML = friends.map(friend => `
+      <div class="col">
+        <div class="card h-100 border-0 shadow text-white">
+          <div class="card-body text-center">
+
+            ${friend.profile_picture
+              ? `<img src="${friend.profile_picture}" class="rounded-circle mb-3" width="80" height="80">`
+              : `<div class="rounded-circle d-flex align-items-center justify-content-center mb-3">
+                   ${friend.username.charAt(0).toUpperCase()}
+                 </div>`}
+
+            <h5 class="card-title fw-bold mb-1">${friend.username}</h5>
+            <p class="mb-1"><small>Künstler: ${friend.favorite_artist}</small></p>
+            <p class="mb-3"><small>Genre: ${friend.favorite_genre}</small></p>
+
+            <div class="d-flex justify-content-center gap-2">
+              <a href="/profile/${friend.id}" class="btn btn-sm btn-outline-light rounded-pill">Profil</a>
+              <button class="btn btn-sm btn-outline-danger rounded-pill"
+                      onclick="deleteFriend(${friend.id})">Löschen</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  });
+
+  async function deleteFriend(id) {
+    const confirmed = confirm("Ist er wirklich das wirklich dein Freund?");
+    if (!confirmed) return;
+
+    await fetch(`/friends/delete/?id=${id}`, { method: "POST" });
+    location.reload();
+  }
+</script>
+
+<style>
+  /*body {
+    background-color: #121212;
+  }
+  .card:hover {
+    transform: scale(1.02);
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 0 15px rgba(183, 131, 241, 0.4);
+  }
+  #search_results a:hover {
+    background-color: #512b75;
+  }*/
+</style>
+{% endblock %}

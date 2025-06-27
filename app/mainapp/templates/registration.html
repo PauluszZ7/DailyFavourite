@@ -18,6 +18,14 @@
     <label for="password2">Passwort bestätigen:</label><br>
     <input type="password" id="password2" name="password2" required><br><br>
 
+    <label for="favorite_artist">Lieblingskünstler:</label><br>
+    <input type="text" id="favorite_artist" name="favorite_artist"><br><br>
+
+    <label for="favorite_genre">Lieblingsgenre:</label><br>
+    <input type="text" id="favorite_genre" name="favorite_genre"><br><br>
+
+
+
     <button onclick="registration()">Bestätigen</button>
 
 
@@ -41,6 +49,8 @@
             const username = document.getElementById("nutzername").value;
             const password1 = document.getElementById("password1").value;
             const password2 = document.getElementById("password2").value;
+            const favorite_artist = document.getElementById("favorite_artist").value;
+            const favorite_genre = document.getElementById("favorite_genre").value;
         
             fetch("/api/registration/", {
                 method: "POST",
@@ -50,7 +60,9 @@
                 },
                 body: JSON.stringify({
                     username: username,
-                    password: password1
+                    password: password1,
+                    favorite_artist: favorite_artist,
+                    favorite_genre: favorite_genre,
                 })
             }) 
             .then(response => response.json())

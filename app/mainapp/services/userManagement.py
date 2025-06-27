@@ -3,6 +3,9 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
+from mainapp.objects.dto_enums import DTOEnum
+from mainapp.services.database import DatabaseManagement
+from mainapp.objects.dtos import UserDTO
 from mainapp.objects.exceptions import (
     DailyFavouriteNoUserFound,
     DailyFavouriteNoUserLoggedIn,
@@ -25,7 +28,7 @@ class UserManagement:
         """
         self.request = request
 
-    def getCurrentUser(self) -> User:
+    def getCurrentUser(self) -> UserDTO:
         """
         Gibt das User-Objekt des aktuell eingeloggten Users zurück.
         NUR GEWOLLT UND MIT BEDACHT NUTZEN!
@@ -33,7 +36,9 @@ class UserManagement:
         (Falls das jemand jemals liest: Ja die Funktion ist sehr unnötig ich weiß :) )
         """
         if self.checkIsLoggedIn():
-            return self.request.user
+            user_model = self.request.user
+            user_dto = DatabaseManagement(None).get(user_model.id, DTOEnum.USER)
+            return user_dto
         else:
             raise DailyFavouriteNoUserLoggedIn()
 
@@ -57,7 +62,7 @@ class UserManagement:
         """
         logout(self.request)
 
-    def register(self, username, password) -> None:
+    def register(self, username, password, dto: UserDTO) -> None:
         """
         Registriert einen neuen Nutzer
 
@@ -67,6 +72,8 @@ class UserManagement:
         """
         user = User.objects.create_user(username, password=password)
         user.save()
+        dto.id = user.id
+        DatabaseManagement(dto).get_or_create(dto, DTOEnum.USER)
 
     def checkIsLoggedIn(self) -> bool:
         """
