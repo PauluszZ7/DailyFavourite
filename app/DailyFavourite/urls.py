@@ -40,6 +40,7 @@ from mainapp.views import (
     homepage_view,
     spotify_search_view,
     friends_search_view,
+    friends_delete,
 )
 
 urlpatterns = [
@@ -54,6 +55,7 @@ urlpatterns = [
     path("groupfeed/", groupFeed_view, name="groupfeed"),
     path("friends/", friendsPage_view, name="friends"),
     path("friends/search/", friends_search_view, name='friends-search'),
+    path("friends/delete/", friends_delete, name='friends-delete'),
     path("friendsfeed/", friendsFeed_view, name="friendsfeed"),
     path("post/create/", createPostPage_view, name="create-post"),
     path('groups/create/', create_group_view, name='group-create'),
