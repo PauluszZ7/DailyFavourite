@@ -107,7 +107,7 @@ class DTOEnum(Enum):
             return MembershipDTO
         elif self.value == "FriendsCombination":
             return FriendsCombinationDTO
-    
+
     def convertToJSON(self, data: List[ModelDTO]):
         if len(data) > 0:
             return [asdict(obj) for obj in data]

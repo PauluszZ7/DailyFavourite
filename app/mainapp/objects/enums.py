@@ -15,7 +15,7 @@ class RoleEnum(str, Enum):
 
     @classmethod
     def get_values(cls):
-        return [opt.value for opt in cls if opt != RoleEnum.ARCHIVE_VIEWER] 
+        return [opt.value for opt in cls if opt != RoleEnum.ARCHIVE_VIEWER]
 
 
 class GenreEnum(str, Enum):
@@ -37,7 +37,7 @@ class GenreEnum(str, Enum):
         if genre not in cls._value2member_map_:
             raise ValueError(f"Invalid role: {genre}")
         return genre
-    
+
     @classmethod
     def get_values(cls):
         return [opt.value for opt in cls]

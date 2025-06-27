@@ -2,7 +2,6 @@ from typing import List, Tuple
 from datetime import datetime
 
 from mainapp.objects.exceptions import (
-    DailyFavouriteAlreadyVotedForPost,
     DailyFavouriteDBObjectCouldNotBeCreated,
     DailyFavouriteDBObjectNotFound,
     DailyFavouriteDBWrongObjectType,
@@ -91,10 +90,10 @@ class PostManagement:
     def deletePost(self, post: PostDTO) -> None:
         DatabaseManagement(self.user).delete(post, DTOEnum.POST)
 
-    def sortPosts(self, posts:List[PostDTO]) -> List[PostDTO]:
+    def sortPosts(self, posts: List[PostDTO]) -> List[PostDTO]:
         return sorted(posts, key=lambda p: p.posted_at, reverse=True)
 
-    def removeDuplicates(self, posts:List[PostDTO]) -> List[PostDTO]:
+    def removeDuplicates(self, posts: List[PostDTO]) -> List[PostDTO]:
         found = False
         non_duplicates = []
 
@@ -104,9 +103,15 @@ class PostManagement:
             if isinstance(post.user, int):
                 post.user = DatabaseManagement(self.user).get(post.user, DTOEnum.USER)
             if isinstance(post.music, str):
-                post.music = DatabaseManagement(self.user).get(post.music, DTOEnum.MUSIC)
+                post.music = DatabaseManagement(self.user).get(
+                    post.music, DTOEnum.MUSIC
+                )
             for p in non_duplicates:
-                if p.user == post.user and p.posted_at == post.posted_at and p.music == post.music:
+                if (
+                    p.user == post.user
+                    and p.posted_at == post.posted_at
+                    and p.music == post.music
+                ):
                     found = True
                     break
 
@@ -114,11 +119,12 @@ class PostManagement:
                 found = False
                 continue
             if isinstance(post.group, int):
-                post.group = DatabaseManagement(self.user).get(post.group, DTOEnum.GROUP)
+                post.group = DatabaseManagement(self.user).get(
+                    post.group, DTOEnum.GROUP
+                )
             else:
                 non_duplicates.append(post)
 
-        print(non_duplicates)
         return non_duplicates
 
     def upvotePost(self, post: PostDTO) -> None:
@@ -126,14 +132,42 @@ class PostManagement:
         try:
             DatabaseManagement(self.user).get_or_create(vote_dto, DTOEnum.VOTE)
         except DailyFavouriteDBObjectCouldNotBeCreated:
-            raise DailyFavouriteAlreadyVotedForPost()
+            votes = DatabaseManagement(self.user).list(
+                self.user.id, DTOEnum.VOTE, "user_id"
+            )
+            v = None
+            for vote in votes:
+                if vote.post == post.id:
+                    v = vote
+                    break
+            if v is None:
+                raise DailyFavouriteDBObjectNotFound(DTOEnum.VOTE, -1)
+            v.is_upvote = True
+            v.user = DatabaseManagement(self.user).get(v.user, DTOEnum.USER)
+            v.post = DatabaseManagement(self.user).get(v.post, DTOEnum.POST)
+            DatabaseManagement(self.user).delete(v, DTOEnum.VOTE)
+            DatabaseManagement(self.user).create_or_update(v, DTOEnum.VOTE)
 
     def downVotePost(self, post: PostDTO) -> None:
         vote_dto = VoteDTO(None, self.user, post, False)
         try:
             DatabaseManagement(self.user).get_or_create(vote_dto, DTOEnum.VOTE)
         except DailyFavouriteDBObjectCouldNotBeCreated:
-            raise DailyFavouriteAlreadyVotedForPost()
+            votes = DatabaseManagement(self.user).list(
+                self.user.id, DTOEnum.VOTE, "user_id"
+            )
+            v = None
+            for vote in votes:
+                if vote.post == post.id:
+                    v = vote
+                    break
+            if v is None:
+                raise DailyFavouriteDBObjectNotFound(DTOEnum.VOTE, -1)
+            v.is_upvote = False
+            v.user = DatabaseManagement(self.user).get(v.user, DTOEnum.USER)
+            v.post = DatabaseManagement(self.user).get(v.post, DTOEnum.POST)
+            DatabaseManagement(self.user).delete(v, DTOEnum.VOTE)
+            DatabaseManagement(self.user).create_or_update(v, DTOEnum.VOTE)
 
     def get_up_and_down_votes(self, post: PostDTO) -> Tuple[int, int]:
         try:

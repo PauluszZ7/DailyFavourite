@@ -47,9 +47,10 @@ class FriendsManagement:
 
     def getFriends(self) -> List[FriendsCombinationDTO]:
         try:
-            return DatabaseManagement(self.user).list(
+            combis = DatabaseManagement(self.user).list(
                 self.user.id, DTOEnum.FRIENDSCOMBINTAION, "baseUser_id"
             )
+            return combis
         except DailyFavouriteDBObjectNotFound:
             return []
 

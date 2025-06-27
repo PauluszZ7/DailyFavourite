@@ -123,7 +123,6 @@ class GroupManagement:
         except DailyFavouriteDBObjectNotFound:
             pass
 
-        print("Gruppe wird gelöscht")
         DatabaseManagement(self.user).delete(group, DTOEnum.GROUP)
 
     def joinGroup(self, group: GroupDTO, password: str | None = None) -> None:
@@ -254,7 +253,9 @@ class GroupManagement:
         max_posts = post.group.max_posts_per_day
         current_role = self._get_role_for_group(post=post)
         if isinstance(post.group.admin, int):
-            post.group.admin = DatabaseManagement(self.user).get(post.group.admin, DTOEnum.USER)
+            post.group.admin = DatabaseManagement(self.user).get(
+                post.group.admin, DTOEnum.USER
+            )
         if max_posts > 0:
             posts_today = self._count_todays_posts(post.group)
             if posts_today >= max_posts:

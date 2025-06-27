@@ -4,6 +4,8 @@
 
 {% block content %}
 <div class="container mt-4">
+
+
   <h2>Post erstellen</h2>
 
   <!-- Formular mit Validierung -->
@@ -117,12 +119,20 @@
           music_id: document.getElementById("music_id").value
         })
       });
-
-      if (response.ok) {
-        form.reset();
-      } else {
-        const error = await response.json();
-        alert(`Fehler: ${error.error || "Unbekannter Fehler"}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.redirect_url) {
+            window.location.href = data.redirect_url;
+          } else {
+            form.reset();
+          }
+        }
+       else {
+          const data = await response.json();
+          const alertDiv = document.createElement("div");
+          alertDiv.className = "alert alert-danger mt-3";
+          alertDiv.innerText = data.error || "Unbekannter Fehler";
+          form.parentNode.insertBefore(alertDiv, form);
       }
     } catch (error) {
       alert("Netzwerkfehler: " + error.message);

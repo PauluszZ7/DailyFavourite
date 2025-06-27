@@ -25,12 +25,10 @@
   {% if groups %}
     <div class="list-group">
       {% for group in groups %}
-        <div class="list-group-item d-flex align-items-start gap-3 flex-wrap">
-          {% if group.profile_image %}
-            <img src="{{ group.profile_image }}" alt="Gruppenbild" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
-          {% else %}
-            <div class="rounded-circle bg-secondary" style="width: 50px; height: 50px;"></div>
-          {% endif %}
+        <div class="list-group-item d-flex align-items-start gap-3 flex-wrap" style="cursor: pointer;"
+        onclick="window.location.href='{% url 'group-feed' group.id %}'">
+
+          <img src="{% if group.profile_picture %}{{ group.profile_picture }}{% else %}/media/standards/group.jpg{% endif %}" alt="Profilbild" class="rounded-circle mb-3" style="width: 70px; height: 70px; object-fit: cover;">
 
           <div class="flex-grow-1">
             <h5 class="mb-1">{{ group.name }}</h5>

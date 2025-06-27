@@ -13,7 +13,6 @@ from mainapp.services.database import DatabaseManagement
 from mainapp.objects.dtos import CommentDTO, PostDTO, GroupDTO, UserDTO
 from mainapp.objects.dto_enums import DTOEnum
 from mainapp.objects.exceptions import (
-    DailyFavouriteAlreadyVotedForPost,
     DailyFavouriteDBObjectNotFound,
 )
 from mainapp.tests.helpers import TEST_DATE, create_dummy_instance
@@ -119,9 +118,6 @@ class TestPostManagement:
         votes = pm.get_up_and_down_votes(simPost1)
         assert votes == (1, 0)
 
-        with pytest.raises(DailyFavouriteAlreadyVotedForPost):
-            pm.upvotePost(simPost1)
-
     def test_downvote_post(self, simRequest, simPost1):
         user = UserManagement(simRequest).getCurrentUser()
         assert user is not None
@@ -134,9 +130,6 @@ class TestPostManagement:
         pm.downVotePost(simPost1)
         votes = pm.get_up_and_down_votes(simPost1)
         assert votes == (0, 1)
-
-        with pytest.raises(DailyFavouriteAlreadyVotedForPost):
-            pm.downVotePost(simPost1)
 
     def test_comment_post(self, simRequest, simPost1):
         user = UserManagement(simRequest).getCurrentUser()

@@ -1,30 +1,82 @@
 {% extends "base.html" %}
+{% load static %}
 {% block content %}
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+function follow(id) {
+  fetch(`/friends/add/${id}/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    }
+  }).then(response => {
+    if (response.ok) {
+      window.location.reload();
+    } else {
+      console.error("Fehler beim Folgen");
+    }
+  });
+}
+
+function unfollow(id) {
+  fetch(`/friends/delete/${id}/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+  }).then(response => {
+    if (response.ok) {
+        window.location.reload();
+    } else {
+      console.error("Fehler beim Entfolgen");
+    }
+  });
+}
+</script>
+
+
 <div class="container mt-4">
 
   <div class="card mb-4 shadow-sm">
+      
     <div class="card-body text-center">
-      <img src="{{ user.profile_picture|default:'/static/images/default_profile.png' }}" class="rounded-circle mb-3" width="120" height="120" alt="Profilbild">
-      <h4 class="card-title">@{{ user.username }}</h4>
-      <p class="text-muted">{{ user.favorite_artist }}<br>🎧 {{ user.favorite_genre }}</p>
+      <img src="{% if profile_user.profile_picture %}{{ profile_user.profile_picture }}{% else %}/media/standards/user.jpg{% endif %}" alt="Profilbild" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+      <h4 class="card-title">@{{ profile_user.username }}</h4>
+      <p class="text-muted">{{ profile_user.favorite_artist }}<br>🎧 {{ profile_user.favorite_genre }}</p>
     </div>
+    {% if user.id != profile_user.id and not is_following %}
+    <button class="btn btn-outline-success" style="margin: 10px;" onclick="follow({{ profile_user.id }})">Folgen</button>
+    {% elif user.id != profile_user.id and is_following %}
+    <button class="btn btn-outline-danger" style="margin: 10px;" onclick="unfollow({{ profile_user.id }})">Endfolgen</button>
+    {% endif %}
   </div>
 
   <div class="card shadow-sm">
     <div class="card-header">
       <h5>Letzte Beiträge</h5>
     </div>
-    <ul class="list-group list-group-flush">
-      {% for post in user_posts %}
-        <li class="list-group-item">
-          <strong>{{ post.music.name }}</strong> von {{ post.music.artist }}<br>
-          <small class="text-muted">{{ post.posted_at }}</small>
-        </li>
-      {% empty %}
-        <li class="list-group-item">Noch keine Beiträge vorhanden.</li>
-      {% endfor %}
-    </ul>
-  </div>
+    {% include 'feeds/feed.html' %}
+      </div>
 
 </div>
+
+
 {% endblock %}

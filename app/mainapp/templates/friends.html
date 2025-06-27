@@ -15,6 +15,17 @@
   <div id="friends_container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
   </div>
 </div>
+ </br>
+
+<ul class="list-group">
+  {% for friend in friends %}
+    <li class="list-group-item d-flex justify-content-between align-items-center"
+        style="cursor: pointer;"
+        onclick="window.location.href='{% url 'other-profile' friend.id %}'">
+      {{ friend.username }}
+    </li>
+  {% endfor %}
+</ul>
 
 <script>
   document.getElementById("friend_search").addEventListener("input", async (e) => {

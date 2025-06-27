@@ -4,7 +4,25 @@
 {% block content %}
 
 
-{% include "feeds/feed.html" %}
+<div class="container mt-4">
+
+  <div class="card mb-4 shadow-sm">
+      
+    <div class="card-body text-center">
+      <img src="{% if group.profile_picture %}{{ group.profile_picture }}{% else %}/media/standards/group.jpg{% endif %}" alt="Profilbild" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+      <h4 class="card-title">@{{ group.name }}</h4>
+      <p class="text-muted">👨🏻‍💻{{ group.admin.username}}<br>🎧 {{ group.genre }}</p>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h5>Letzte Beiträge</h5>
+    </div>
+    {% include 'feeds/feed.html' %}
+      </div>
+
+</div>
 
 
 {% endblock %}
