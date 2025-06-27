@@ -8,8 +8,16 @@ from mainapp.objects.exceptions import (
     DailyFavouriteDBWrongObjectType,
     DailyFavouriteMinimumRequiredParameter,
 )
-from mainapp.objects.dtos import UserDTO, PostDTO, GroupDTO, CommentDTO, VoteDTO
+from mainapp.objects.dtos import (
+    MusicDTO,
+    UserDTO,
+    PostDTO,
+    GroupDTO,
+    CommentDTO,
+    VoteDTO,
+)
 from mainapp.objects.dto_enums import DTOEnum
+from mainapp.objects.enums import RoleEnum
 from mainapp.services.database import DatabaseManagement
 
 
@@ -38,12 +46,40 @@ class PostManagement:
                 group.id, DTOEnum.POST, "group_id"
             )
         elif users is not None:
-            dtos = []
+            user_posts = []
             for user in users:
-                dtos.extend(
+                user_posts.extend(
                     DatabaseManagement(self.user).list(user, DTOEnum.POST, "user_id")
                 )
-            return dtos
+
+            dtos = []
+            for post in user_posts:
+                dbm = DatabaseManagement(self.user)
+                group = dbm.get(post.group, DTOEnum.GROUP)
+
+                memberships = DatabaseManagement(self.user).list(
+                    group.id, DTOEnum.MEMBERSHIP, "group_id"
+                )
+                group_is_archive = any(
+                    m.role == RoleEnum.ARCHIVE_VIEWER for m in memberships
+                )
+                if not group.is_public and not group_is_archive:
+                    continue
+                user = dbm.get(post.user, DTOEnum.USER)
+
+                music = dbm.get(post.music, DTOEnum.MUSIC)
+                dtos.append(
+                    PostDTO(
+                        id=post.id,
+                        user=user,
+                        group=group,
+                        music=music,
+                        posted_at=post.posted_at,
+                    )
+                )
+
+            sorted_posts = sorted(dtos, key=lambda p: p.posted_at, reverse=True)
+            return sorted_posts
 
         raise DailyFavouriteMinimumRequiredParameter(
             "PostManagement.ListPosts", "Missing group or friends."
@@ -112,9 +148,18 @@ class PostManagement:
             comments = self.getCommentsForPost(post)
             votes = self.get_up_and_down_votes(post)
             votes_diff = votes[0] - votes[1]
-            user = dbm.get(post.user, DTOEnum.USER)
-            group = dbm.get(post.group, DTOEnum.GROUP)
-            music = dbm.get(post.music, DTOEnum.MUSIC)
+            if isinstance(post.user, UserDTO):
+                user = post.user
+            else:
+                user = dbm.get(post.user, DTOEnum.USER)
+            if isinstance(post.group, GroupDTO):
+                group = post.group
+            else:
+                group = dbm.get(post.group, DTOEnum.GROUP)
+            if isinstance(post.music, MusicDTO):
+                music = post.music
+            else:
+                music = dbm.get(post.music, DTOEnum.MUSIC)
 
             post_json = {
                 "id": post.id,

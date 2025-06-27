@@ -72,3 +72,9 @@ class MembershipDTO(ModelDTO):
     user: UserDTO
     group: GroupDTO
     role: RoleEnum
+
+
+@dataclass
+class FriendsCombinationDTO(ModelDTO):
+    baseUser: UserDTO
+    friend: UserDTO

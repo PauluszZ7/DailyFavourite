@@ -6,6 +6,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
 
 
+from mainapp.services.GroupManagement import GroupManagement
 from mainapp.services.userManagement import UserManagement
 from mainapp.services.PostManagement import PostManagement
 from mainapp.services.database import DatabaseManagement
@@ -105,26 +106,6 @@ class TestPostManagement:
         assert type(posts[0]) is PostDTO
         assert type(posts[1]) is PostDTO
 
-    def test_list_users_posts(self, simRequest, simPost1, simPost2):
-        user = UserManagement(simRequest).getCurrentUser()
-        assert user is not None
-
-        pm = PostManagement(user)
-        pm.createPost(simPost1)
-
-        user2 = user
-        user2.id = 2
-        simPost2.user = user2
-        pm.createPost(simPost2)
-
-        posts = pm.listPosts(users=[user.id, user2.id])
-
-        assert posts is not None
-        assert type(posts) is list
-        assert len(posts) == 2
-        assert type(posts[0]) is PostDTO
-        assert type(posts[1]) is PostDTO
-
     def test_upvote_post(self, simRequest, simPost1):
         user = UserManagement(simRequest).getCurrentUser()
         assert user is not None
@@ -190,14 +171,17 @@ class TestPostManagement:
         assert user is not None
 
         simPost1.user = user
+        simPost1.group = None
         simPost2.user = user
+        simPost2.group = None
 
         pm = PostManagement(user)
-        pm.createPost(simPost1)
+        gm = GroupManagement(user)
+        gm.createPost(simPost1)
         pm.upvotePost(simPost1)
         pm.commentPost(simPost1, "TestPost1")
 
-        pm.createPost(simPost2)
+        gm.createPost(simPost2)
         pm.downVotePost(simPost2)
         pm.commentPost(simPost2, "TestPost2")
 

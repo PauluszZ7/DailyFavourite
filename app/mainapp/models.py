@@ -31,6 +31,19 @@ class UserMeta(models.Model):
     # )
 
 
+class FriendsCombination(models.Model):
+    id = models.AutoField(primary_key=True)
+    baseUser = models.ForeignKey(
+        UserMeta, on_delete=models.CASCADE, related_name="friendships_baseUser"
+    )
+    friend = models.ForeignKey(
+        UserMeta, on_delete=models.CASCADE, related_name="friendship_friend"
+    )
+
+    class Meta:
+        unique_together = ("baseUser", "friend")
+
+
 class Group(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)

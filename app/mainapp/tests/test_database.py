@@ -24,6 +24,7 @@ class TestDatabase:
             DTOEnum.COMMENT,
             DTOEnum.POST,
             DTOEnum.VOTE,
+            DTOEnum.FRIENDSCOMBINTAION,
         ],
     )
     def test_create_get_delete(self, dto_type: DTOEnum):
@@ -65,6 +66,7 @@ class TestDatabase:
             DTOEnum.COMMENT,
             DTOEnum.POST,
             DTOEnum.VOTE,
+            DTOEnum.FRIENDSCOMBINTAION,
         ],
     )
     def test_list(self, dto_type: DTOEnum):
@@ -84,24 +86,30 @@ class TestDatabase:
         # Spezialfall VOTE: User und Music nicht doppelt.
         if dto_type == DTOEnum.VOTE:
             test_object.user.id += 1
+        # Spezialfall Friend (keine zwei User mit gleichen Username)
+        if dto_type == DTOEnum.FRIENDSCOMBINTAION:
+            test_object.baseUser.username = "EinAndererTestUser"
+            test_object.baseUser.id = 1235
         dbm.get_or_create(test_object, dto_type)
 
-        fieldname, value = get_first_test_field_and_value(test_object)
-        dto_objects = dbm.list(value, dto_type, fieldname)
+        if dto_type != DTOEnum.FRIENDSCOMBINTAION:
+            # Kein Feld, was man einfach simulieren kann um zu filtern
+            fieldname, value = get_first_test_field_and_value(test_object)
+            dto_objects = dbm.list(value, dto_type, fieldname)
+
+            assert len(dto_objects) == 2
+            assert type(dto_objects[0]) is dto_type.getDTO()
+            assert type(dto_objects[1]) is dto_type.getDTO()
+
+            assert dto_objects[0].id == object_id or dto_objects[0].id == str(object_id)
+            assert dto_objects[1].id == object_id + 1 or dto_objects[1].id == str(
+                object_id + 1
+            )
+
         dto_all_objects = dbm.list_all(dto_type)
-
-        assert len(dto_objects) == 2
-        assert type(dto_objects[0]) is dto_type.getDTO()
-        assert type(dto_objects[1]) is dto_type.getDTO()
-
         assert len(dto_all_objects) == 2
         assert type(dto_all_objects[0]) is dto_type.getDTO()
         assert type(dto_all_objects[1]) is dto_type.getDTO()
-
-        assert dto_objects[0].id == object_id or dto_objects[0].id == str(object_id)
-        assert dto_objects[1].id == object_id + 1 or dto_objects[1].id == str(
-            object_id + 1
-        )
 
 
 # Helpers

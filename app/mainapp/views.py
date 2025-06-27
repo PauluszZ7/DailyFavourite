@@ -118,6 +118,7 @@ def createPostPage_view(request):
         },
     )
 
+
 def friendsPage_view(request):
     return render(request, "friends.html")
 
@@ -155,12 +156,13 @@ def logout_view(request):
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
 
+
 @require_GET
 def spotify_search_view(request):
     query = request.GET.get("q", "").strip()
     if not query:
         return JsonResponse({"error": "Fehlender Suchbegriff (q)"}, status=400)
-    
+
     try:
         spotify = SpotifyConnector()
         results = spotify.search_music_title(query, max_results=5)

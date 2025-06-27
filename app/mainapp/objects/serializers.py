@@ -1,5 +1,14 @@
 from rest_framework import serializers
-from mainapp.models import UserMeta, Group, Membership, Music, Post, Comment, Vote
+from mainapp.models import (
+    UserMeta,
+    Group,
+    Membership,
+    Music,
+    Post,
+    Comment,
+    Vote,
+    FriendsCombination,
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,6 +46,12 @@ class MembershipSerializer(serializers.ModelSerializer):
     class Meta:
         model = Membership
         fields = ["id", "user", "group", "role"]
+
+
+class FriendsCombinationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FriendsCombination
+        fields = ["id", "baseUser", "friend"]
 
 
 class MusicSerializer(serializers.ModelSerializer):

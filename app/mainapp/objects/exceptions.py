@@ -91,6 +91,14 @@ class DailyFavouriteUnallowedRoleAssignment(DailyFavouriteBaseException):
         super().__init__(500, message, context)
 
 
+class DailyFavouriteAlredyFriends(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "Requested User and Friend are already friends."
+        context = {}
+        super().__init__(500, message, context)
+
+
 class DailyFavouriteDBObjectNotFound(DailyFavouriteBaseException):
 
     def __init__(self, type, id) -> None:
@@ -139,6 +147,7 @@ class DailyFavouriteSpotifyInvalidBase62ID(DailyFavouriteBaseException):
         message = "Spotify ID is invalid and not a base62 ID"
         context = {"TrackID": track_id}
         super().__init__(400, message, context)
+
 
 class DailyFavouriteSpotifyNoConnectionPossible(DailyFavouriteBaseException):
 

@@ -61,9 +61,15 @@ class DatabaseManagement:
         field_names = [field.name for field in model_class._meta.get_fields()]
         if (
             filter_attr.split("_")[0] not in field_names
+            and filter_attr.split("__")[0] not in field_names
             and filter_attr not in field_names
         ):
             raise DailyFavouriteDBAttributeNotFound(type.getDTO(), filter_attr)
+
+        if len(filter_attr.split("__")) == 2:
+            filter_attr, extracting_type = filter_attr.split("__")
+        else:
+            extracting_type = None
 
         field = model_class._meta.get_field(filter_attr)
 
@@ -75,7 +81,12 @@ class DatabaseManagement:
                 **{f"{filter_attr}__date": attribute_value}
             )
         else:
-            queryset = model_class.objects.filter(**{filter_attr: attribute_value})
+            if extracting_type:
+                queryset = model_class.objects.filter(
+                    **{f"{filter_attr}__{extracting_type}": attribute_value}
+                )
+            else:
+                queryset = model_class.objects.filter(**{filter_attr: attribute_value})
 
         if not queryset.exists():
             raise DailyFavouriteDBObjectNotFound(type.getDTO(), id=0)

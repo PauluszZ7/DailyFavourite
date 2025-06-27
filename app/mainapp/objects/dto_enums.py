@@ -1,5 +1,14 @@
 from enum import Enum
-from mainapp.models import Membership, UserMeta, Group, Music, Post, Comment, Vote
+from mainapp.models import (
+    Membership,
+    UserMeta,
+    Group,
+    Music,
+    Post,
+    Comment,
+    Vote,
+    FriendsCombination,
+)
 from mainapp.objects.serializers import (
     UserSerializer,
     GroupSerializer,
@@ -8,6 +17,7 @@ from mainapp.objects.serializers import (
     CommentSerializer,
     VoteSerializer,
     MembershipSerializer,
+    FriendsCombinationSerializer,
 )
 from mainapp.objects.dtos import (
     ModelDTO,
@@ -18,6 +28,7 @@ from mainapp.objects.dtos import (
     PostDTO,
     VoteDTO,
     MembershipDTO,
+    FriendsCombinationDTO,
 )
 
 
@@ -29,6 +40,7 @@ class DTOEnum(Enum):
     POST = "Post"
     VOTE = "Vote"
     MEMBERSHIP = "Membership"
+    FRIENDSCOMBINTAION = "FriendsCombination"
 
     def getModel(self):
         """
@@ -48,6 +60,8 @@ class DTOEnum(Enum):
             return Vote
         elif self.value == "Membership":
             return Membership
+        elif self.value == "FriendsCombination":
+            return FriendsCombination
 
     def getSerializer(self):
         """
@@ -68,6 +82,8 @@ class DTOEnum(Enum):
             return VoteSerializer
         elif self.value == "Membership":
             return MembershipSerializer
+        elif self.value == "FriendsCombination":
+            return FriendsCombinationSerializer
 
     def getDTO(self):
         """
@@ -87,6 +103,8 @@ class DTOEnum(Enum):
             return VoteDTO
         elif self.value == "Membership":
             return MembershipDTO
+        elif self.value == "FriendsCombination":
+            return FriendsCombinationDTO
 
     @classmethod
     def fromDTO(cls, dto: ModelDTO):
@@ -104,3 +122,5 @@ class DTOEnum(Enum):
             return DTOEnum.VOTE
         elif type(dto) is MembershipDTO:
             return DTOEnum.MEMBERSHIP
+        elif type(dto) is FriendsCombinationDTO:
+            return DTOEnum.FRIENDSCOMBINTAION

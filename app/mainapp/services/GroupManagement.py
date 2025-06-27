@@ -244,6 +244,12 @@ class GroupManagement:
         raise DailyFavouriteDBObjectNotFound(DTOEnum.MEMBERSHIP, -1)
 
     def createPost(self, post: PostDTO) -> None:
+        if post.group is None:
+            # Profilpost (Archive)
+            post.user = self.user
+            post.posted_at = datetime.now()
+            self.syncPostToArchiveGroup(post)
+            return None
         max_posts = post.group.max_posts_per_day
         current_role = self._get_role_for_group(post=post)
         if max_posts > 0:
