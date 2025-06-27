@@ -31,40 +31,16 @@ class UserMeta(models.Model):
 
 
 class Group(models.Model):
-    GENRE_CHOICES = [
-        ('Pop', 'Pop'),
-        ('Rock', 'Rock'),
-        ('Hip-Hop', 'Hip-Hop'),
-        ('Electronic', 'Electronic'),
-        ('Jazz', 'Jazz'),
-        ('Classical', 'Classical'),
-        ('Indie', 'Indie'),
-        ('Metal', 'Metal'),
-        ('Folk', 'Folk'),
-        ('Schlager', 'Schlager'),
-        ('Andere', 'Andere'),
-        ('Gemischt', 'Gemischt'),
-    ]
-
-    PERMISSION_CHOICES = [
-        ('all', 'Alle Mitglieder'),
-        ('moderators', 'Nur Moderatoren'),
-        ('owner', 'Nur Besitzer'),
-    ]
-
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.TextField(null=True, blank=True)
     is_public = models.BooleanField(default=True)
     max_posts_per_day = models.IntegerField(default=1)
-    post_permission = models.CharField(max_length=50, choices=PERMISSION_CHOICES, default='all')
-    read_permission = models.CharField(max_length=50, choices=PERMISSION_CHOICES, default='all')
+    post_permission = models.CharField(max_length=50, default='member')
+    read_permission = models.CharField(max_length=50, default='member')
     profile_Image = models.ImageField(upload_to="group_images/", null=True, blank=True)
-    genre = models.CharField(max_length=20, choices=GENRE_CHOICES, null=True, blank=True)
-    members = models.ManyToManyField(UserMeta, through='Membership', related_name='member_groups')
-    owner = models.ForeignKey(UserMeta, on_delete=models.CASCADE, null=True, blank=True, related_name='owned_groups')
-    moderators = models.ManyToManyField(UserMeta, related_name='moderator_groups')
+    genre = models.CharField(max_length=20, null=True, blank=True)
 
 
 class Membership(models.Model):

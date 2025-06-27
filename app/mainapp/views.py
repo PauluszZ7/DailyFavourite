@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
+from app.mainapp.objects.enums import RoleEnum
 from mainapp.services.userManagement import UserManagement
 from .models import Group, UserMeta
 from django.utils import timezone
@@ -141,25 +142,26 @@ def create_group_view(request):
         description = request.POST.get("description")
         is_public = bool(request.POST.get("is_public"))
         genre = request.POST.get("genre") or None
-        max_posts = int(request.POST.get("max_posts_per_day") or 1)
-        post_permission = request.POST.get("post_permission")
-        read_permission = request.POST.get("read_permission")
+        max_posts = int(request.POST.get("max_posts_per_day") or -1)
+        post_permission = request.POST.get("post_permission") or RoleEnum.MEMBER
+        read_permission = request.POST.get("read_permission") or RoleEnum.MEMBER
         profile_image = request.FILES.get("profile_Image")
+        print(profile_image)
 
-        group = Group.objects.create(
-            name=name,
-            description=description,
-            is_public=is_public,
-            genre=genre,
-            max_posts_per_day=max_posts,
-            post_permission=post_permission,
-            read_permission=read_permission,
-            profile_Image=profile_image,
-            owner=user_meta,
-            created_at=timezone.now(),
-        )
-        group.members.add(user_meta)
-        group.moderators.add(user_meta)
+        # group = Group.objects.create(
+        #     name=name,
+        #     description=description,
+        #     is_public=is_public,
+        #     genre=genre,
+        #     max_posts_per_day=max_posts,
+        #     post_permission=post_permission,
+        #     read_permission=read_permission,
+        #     profile_Image=profile_image,
+        #     owner=user_meta,
+        #     created_at=timezone.now(),
+        # )
+        # group.members.add(user_meta)
+        # group.moderators.add(user_meta)
 
         return redirect("my-groups")
 
@@ -168,50 +170,52 @@ def create_group_view(request):
 
 @login_required
 def edit_group_view(request, group_id):
-    group = get_object_or_404(Group, id=group_id)
+    # group = get_object_or_404(Group, id=group_id)
 
-    if request.method == "POST":
-        group.name = request.POST.get("name")
-        group.description = request.POST.get("description")
-        group.is_public = request.POST.get("is_public") == "True"
-        group.genre = request.POST.get("genre") or None
-        group.max_posts_per_day = int(request.POST.get("max_posts_per_day") or 1)
-        group.post_permission = request.POST.get("post_permission")
-        group.read_permission = request.POST.get("read_permission")
+    # if request.method == "POST":
+    #     group.name = request.POST.get("name")
+    #     group.description = request.POST.get("description")
+    #     group.is_public = request.POST.get("is_public") == "True"
+    #     group.genre = request.POST.get("genre") or None
+    #     group.max_posts_per_day = int(request.POST.get("max_posts_per_day") or 1)
+    #     group.post_permission = request.POST.get("post_permission")
+    #     group.read_permission = request.POST.get("read_permission")
 
-        if "profile_Image" in request.FILES:
-            group.profile_Image = request.FILES["profile_Image"]
+    #     if "profile_Image" in request.FILES:
+    #         group.profile_Image = request.FILES["profile_Image"]
 
-        group.save()
-        return redirect("my-groups", group_id=group.id)
+    #     group.save()
+    #     return redirect("my-groups", group_id=group.id)
 
     return render(request, "groups/group_edit.html", {"group": group})
 
 
 @login_required
 def my_groups_view(request):
-    user_meta = UserMeta.objects.get(id=request.user.id)
-    groups = Group.objects.filter(members=user_meta) if user_meta else []
+    # user_meta = UserMeta.objects.get(id=request.user.id)
+    # groups = Group.objects.filter(members=user_meta) if user_meta else []
+    groups = []
     return render(request, 'groups/my_groups.html', {'groups': groups})
 
 
 @login_required(login_url='/login/')
 def delete_group_view(request, group_id):
-    try:
-        user_meta = UserMeta.objects.get(id=request.user.id)
-    except UserMeta.DoesNotExist:
-        messages.error(request, 'Benutzerprofil nicht gefunden.')
-        return redirect('my-groups')
+    # try:
+    #     user_meta = UserMeta.objects.get(id=request.user.id)
+    # except UserMeta.DoesNotExist:
+    #     messages.error(request, 'Benutzerprofil nicht gefunden.')
+    #     return redirect('my-groups')
 
-    group = get_object_or_404(Group, id=group_id, owner=user_meta)
+    # group = get_object_or_404(Group, id=group_id, owner=user_meta)
 
-    if request.method == 'POST':
-        group.delete()
-        messages.success(request, 'Gruppe wurde gelöscht!')
-        return redirect('my-groups')
+    # if request.method == 'POST':
+    #     group.delete()
+    #     messages.success(request, 'Gruppe wurde gelöscht!')
+    #     return redirect('my-groups')
 
-    messages.warning(request, 'Ungültige Anfrage.')
-    return redirect('group-edit', group_id=group_id)
+    # messages.warning(request, 'Ungültige Anfrage.')
+    # return redirect('group-edit', group_id=group_id)
+    return redirect('my-groups')
 
 
 def homepage_view(request):
