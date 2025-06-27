@@ -53,6 +53,7 @@ class TestGroupManagement:
         assert user is not None
 
         group_management = GroupManagement(user)
+        groups_before = len(GroupManagement(user).listGroups())
         new_group = create_dummy_instance(GroupDTO)
         new_group.id = 123
         group_management.createGroup(new_group)
@@ -61,6 +62,7 @@ class TestGroupManagement:
 
         assert isinstance(created_group, GroupDTO)
         assert created_group.admin == user.id
+        assert groups_before + 1 == len(GroupManagement(user).listGroups())
 
         group_management.deleteGroup(created_group)
 

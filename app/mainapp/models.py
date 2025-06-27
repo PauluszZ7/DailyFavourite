@@ -9,28 +9,6 @@ class UserMeta(models.Model):
     favorite_artist = models.CharField(max_length=255, null=True, blank=True)
     favorite_genre = models.CharField(max_length=100, null=True, blank=True)
 
-    ### Es sind grade 2 verschiedene Wege von Permissions implementiert, wir müssen uns auf eine einigen. Am besten machen wir das wenn wir die Groups bearbeiten und schauen
-    ### was dann am besten/einfachsten funktioniert.
-    #
-    # groups = models.ManyToManyField(
-    #     Group,
-    #     related_name="custom_user_set",
-    #     blank=True,
-    #     help_text="The groups this user belongs to.",
-    #     verbose_name="groups",
-    #     related_query_name="custom_user",
-    # )
-
-    # user_permissions = models.ManyToManyField(
-    #     Permission,
-    #     related_name="custom_user_set",
-    #     blank=True,
-    #     help_text="Specific permissions for this user.",
-    #     verbose_name="user permissions",
-    #     related_query_name="custom_user",
-    # )
-
-
 class FriendsCombination(models.Model):
     id = models.AutoField(primary_key=True)
     baseUser = models.ForeignKey(

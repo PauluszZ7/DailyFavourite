@@ -24,7 +24,7 @@
      class="rounded-circle bg-light mb-2 d-flex align-items-center justify-content-center"
      style="width: 120px; height: 120px;
             {% if group.profile_Image %}
-              background-image: url('{{ group.profile_Image.url }}');
+              background-image: url('{{ group.profile_Image }}');
             {% else %}
               background-color: #e9ecef;
             {% endif %}
@@ -37,23 +37,23 @@
       <input type="file" name="profile_Image" id="profile_Image" class="form-control d-none">
     </div>
 
+<div class="form-check mb-3">
+    <input type="checkbox" name="is_public" class="form-check-input" id="is_public" checked>
+    <label class="form-check-label" for="is_public" value={ group.is_public }>Öffentlich</label>
+  </div>
+
+  <div class="mb-3" id="password_field" style="display: none;">
+    <label class="form-label">Passwort:</label>
+    <input type="password" name="password" class="form-control">
+  </div>
+
     <div class="mb-3">
       <label for="genre" class="form-label">Genre</label>
       <select name="genre" id="genre" class="form-select">
-        {% for value, label in group.GENRE_CHOICES %}
-          <option value="{{ value }}" {% if group.genre == value %}selected{% endif %}>{{ label }}</option>
+        {% for value in genres %}
+          <option value="{{ value }}" {% if group.genre == value %}selected{% endif %}>{{ value }}</option>
         {% endfor %}
       </select>
-    </div>
-
-    <div class="mb-3">
-      <label class="form-label">Sichtbarkeit</label>
-      <div class="btn-group" role="group">
-        <input type="radio" class="btn-check" name="is_public" id="publicToggle" value="True" autocomplete="off" {% if group.is_public %}checked{% endif %}>
-        <label class="btn btn-outline-primary" for="publicToggle">Öffentlich</label>
-        <input type="radio" class="btn-check" name="is_public" id="privateToggle" value="False" autocomplete="off" {% if not group.is_public %}checked{% endif %}>
-        <label class="btn btn-outline-primary" for="privateToggle">Privat</label>
-      </div>
     </div>
 
     <div class="mb-3">
@@ -64,8 +64,8 @@
     <div class="mb-3">
       <label for="post_permission" class="form-label">Wer darf posten?</label>
       <select name="post_permission" id="post_permission" class="form-select">
-        {% for value, label in group.PERMISSION_CHOICES %}
-          <option value="{{ value }}" {% if group.post_permission == value %}selected{% endif %}>{{ label }}</option>
+        {% for value in permissions %}
+          <option value="{{ value }}" {% if group.post_permission == value %}selected{% endif %}>{{ value }}</option>
         {% endfor %}
       </select>
     </div>
@@ -73,8 +73,8 @@
     <div class="mb-3">
       <label for="read_permission" class="form-label">Wer darf lesen?</label>
       <select name="read_permission" id="read_permission" class="form-select">
-        {% for value, label in group.PERMISSION_CHOICES %}
-          <option value="{{ value }}" {% if group.read_permission == value %}selected{% endif %}>{{ label }}</option>
+        {% for value in permissions %}
+          <option value="{{ value }}" {% if group.read_permission == value %}selected{% endif %}>{{ value }}</option>
         {% endfor %}
       </select>
     </div>
@@ -134,4 +134,22 @@
     }
   });
 </script>
+<script>
+  const checkbox = document.getElementById("is_public");
+  const passwordField = document.getElementById("password_field");
+
+  checkbox.addEventListener("change", () => {
+    if (checkbox.checked) {
+      passwordField.style.display = "none";
+    } else {
+      passwordField.style.display = "block";
+    }
+  });
+
+  // Initialer Zustand beim Laden der Seite
+  window.addEventListener("load", () => {
+    passwordField.style.display = checkbox.checked ? "none" : "block";
+  });
+</script>
+
 {% endblock %}

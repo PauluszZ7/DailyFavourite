@@ -78,7 +78,7 @@ class GroupManagement:
             raise DailyFavouritePrivateGroupMustContainPassword()
 
         group.admin = self.user
-        DatabaseManagement(self.user).get_or_create(group, DTOEnum.GROUP)
+        group = DatabaseManagement(self.user).get_or_create(group, DTOEnum.GROUP)
         membership = MembershipDTO(None, self.user, group, RoleEnum.OWNER)
         DatabaseManagement(self.user).get_or_create(membership, DTOEnum.MEMBERSHIP)
 
@@ -123,6 +123,7 @@ class GroupManagement:
         except DailyFavouriteDBObjectNotFound:
             pass
 
+        print("Gruppe wird gelöscht")
         DatabaseManagement(self.user).delete(group, DTOEnum.GROUP)
 
     def joinGroup(self, group: GroupDTO, password: str | None = None) -> None:

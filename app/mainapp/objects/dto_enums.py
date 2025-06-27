@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 from mainapp.models import (
     Membership,
     UserMeta,
@@ -105,6 +106,13 @@ class DTOEnum(Enum):
             return MembershipDTO
         elif self.value == "FriendsCombination":
             return FriendsCombinationDTO
+    
+    def convertToJSON(self, data: List[ModelDTO]):
+        if len(data) > 0:
+            serializer = self.getSerializer() 
+            return serializer(data, many=True).data
+        else:
+            return []
 
     @classmethod
     def fromDTO(cls, dto: ModelDTO):

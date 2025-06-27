@@ -22,12 +22,17 @@
     <label class="form-check-label" for="is_public">Öffentlich</label>
   </div>
 
+  <div class="mb-3" id="password_field" style="display: none;">
+    <label class="form-label">Passwort:</label>
+    <input type="password" name="password" class="form-control">
+  </div>
+
   <div class="mb-3">
     <label class="form-label">Genre:</label>
     <select name="genre" class="form-select">
-      <option value="">Bitte wählen</option>
-      {% for value, label in group.GENRE_CHOICES %}
-        <option value="{{ value }}">{{ label }}</option>
+      <option disabled selected >Bitte wählen</option>
+      {% for value in genres %}
+        <option value="{{ value }}">{{ value }}</option>
       {% endfor %}
     </select>
   </div>
@@ -40,8 +45,8 @@
   <div class="mb-3">
     <label class="form-label">Post-Erlaubnis:</label>
     <select name="post_permission" class="form-select">
-      {% for value, label in group.PERMISSION_CHOICES %}
-        <option value="{{ value }}">{{ label }}</option>
+      {% for value in permissions %}
+        <option value="{{ value }}">{{ value }}</option>
       {% endfor %}
     </select>
   </div>
@@ -49,8 +54,8 @@
   <div class="mb-3">
     <label class="form-label">Lese-Erlaubnis:</label>
     <select name="read_permission" class="form-select">
-      {% for value, label in group.PERMISSION_CHOICES %}
-        <option value="{{ value }}">{{ label }}</option>
+      {% for value in permissions %}
+        <option value="{{ value }}">{{ value }}</option>
       {% endfor %}
     </select>
   </div>
@@ -62,4 +67,21 @@
 
   <button type="submit" class="btn btn-primary">Gruppe erstellen</button>
 </form>
+<script>
+  const checkbox = document.getElementById("is_public");
+  const passwordField = document.getElementById("password_field");
+
+  checkbox.addEventListener("change", () => {
+    if (checkbox.checked) {
+      passwordField.style.display = "none";
+    } else {
+      passwordField.style.display = "block";
+    }
+  });
+
+  // Initialer Zustand beim Laden der Seite
+  window.addEventListener("load", () => {
+    passwordField.style.display = checkbox.checked ? "none" : "block";
+  });
+</script>
 {% endblock %}

@@ -41,6 +41,7 @@ from mainapp.views import (
     spotify_search_view,
     friends_search_view,
     friends_delete,
+    group_search_view,
 )
 
 urlpatterns = [
@@ -54,17 +55,18 @@ urlpatterns = [
     path("homepage/", homepageFeed_view, name="homepage"),
     path("groupfeed/", groupFeed_view, name="groupfeed"),
     path("friends/", friendsPage_view, name="friends"),
-    path("friends/search/", friends_search_view, name='friends-search'),
+    path("friends/search/", friends_search_view, name='friends-search'),            # DONE
     path("friends/delete/", friends_delete, name='friends-delete'),
     path("friendsfeed/", friendsFeed_view, name="friendsfeed"),
     path("post/create/", createPostPage_view, name="create-post"),
-    path('groups/create/', create_group_view, name='group-create'),
-    path('groups/', my_groups_view, name='my-groups'),
-    path('groups/<int:group_id>/edit/', edit_group_view, name='group-edit'),
-    path('groups/<int:group_id>/delete/', delete_group_view, name='delete_group'),
-    path("api/login/", login_view, name="backend-login"),
-    path("api/logout/", logout_view, name="backend-logout"),
-    path("api/registration/", registration_view, name="backend-registration"),
-    path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
-    path("api/search/spotify/", spotify_search_view, name="spotify-search"),
+    path('groups/create/', create_group_view, name='group-create'),                 # DONE
+    path('groups/', my_groups_view, name='my-groups'),                              # FAST DONE (PROFILBILD)
+    path('groups/<int:group_id>/edit/', edit_group_view, name='group-edit'),        # FAST DONE (PROFILBILD)
+    path('groups/<int:group_id>/delete/', delete_group_view, name='delete_group'),  # DONE
+    path("api/login/", login_view, name="backend-login"),                           # DONE
+    path("api/logout/", logout_view, name="backend-logout"),                        # DONE
+    path("api/registration/", registration_view, name="backend-registration"),      # DONE
+    path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),        
+    path("api/search/spotify/", spotify_search_view, name="spotify-search"),        # DONE
+    path("api/search/group/", group_search_view, name="group-search"),              # DONE
 ]

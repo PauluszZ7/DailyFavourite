@@ -10,12 +10,24 @@
     <a href="{% url 'group-create' %}" class="btn btn-primary">Gruppe erstellen</a>
   </div>
 
+    <div class="mb-3">
+      <input type="text" 
+             class="form-control" 
+             id="group_search" 
+             placeholder="Gruppe suchen..." 
+             autocomplete="off"
+             required>
+      <input type="hidden" id="group_id" name="group_id">
+      <div id="search_results" class="list-group mt-2 d-none"></div>
+    </div>
+
+
   {% if groups %}
     <div class="list-group">
       {% for group in groups %}
         <div class="list-group-item d-flex align-items-start gap-3 flex-wrap">
           {% if group.profile_image %}
-            <img src="{{ group.profile_image.url }}" alt="Gruppenbild" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+            <img src="{{ group.profile_image }}" alt="Gruppenbild" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
           {% else %}
             <div class="rounded-circle bg-secondary" style="width: 50px; height: 50px;"></div>
           {% endif %}
@@ -25,8 +37,8 @@
             <small class="text-muted d-block">{{ group.description }}</small>
             <small class="d-block mt-1">
               <strong>Sichtbarkeit:</strong> {% if group.is_public %}Öffentlich{% else %}Privat{% endif %} |
-              <strong>Posten erlaubt für:</strong> {{ group.get_post_permission_display }} |
-              <strong>Lesen erlaubt für:</strong> {{ group.get_read_permission_display }}
+              <strong>Posten erlaubt für:</strong> {{ group.post_permission }} |
+              <strong>Lesen erlaubt für:</strong> {{ group.read_permission }}
             </small>
           </div>
 
@@ -45,4 +57,41 @@
   {% endif %}
 
 </div>
+
+
+<script>
+  document.getElementById("group_search").addEventListener("input", async (e) => {
+    const query = e.target.value.trim();
+    const resultsDiv = document.getElementById("search_results");
+    
+    if (query.length < 2) {
+      resultsDiv.classList.add("d-none");
+      return;
+    }
+
+    // Spotify-API abfragen
+    const response = await fetch(`/api/search/group/?q=${encodeURIComponent(query)}`);
+    const groups = await response.json();
+    
+    // Ergebnisse anzeigen
+    if (groups.length > 0) {
+      resultsDiv.innerHTML = groups.map(group => `
+  <a href="#" class="list-group-item list-group-item-action" 
+     data-id="${group.id}"
+     onclick="
+       document.getElementById('group_search').value = '${group.name}';
+       document.getElementById('group_id').value = '${group.id}';
+       this.parentNode.classList.add('d-none');
+     ">
+    <small class="text-muted">
+      ${group.is_public ? '(Öffentlich)' : '(Privat)'} ${group.name}
+    </small>
+  </a>
+`).join("");
+      resultsDiv.classList.remove("d-none");
+    } else {
+      resultsDiv.innerHTML = '<div class="list-group-item">Keine Ergebnisse</div>';
+    }
+  });
+</script>
 {% endblock %}
