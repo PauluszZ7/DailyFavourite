@@ -5,8 +5,10 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from mainapp.services.spotifyConnector import SpotifyConnector
+from django.views.decorators.http import require_GET
 
-# from mainapp.objects.enums import RoleEnum
 from mainapp.services.userManagement import UserManagement
 from mainapp.objects.dtos import UserDTO
 
@@ -70,6 +72,7 @@ def friendsFeed_view(request):
     context = {"posts": posts_data}
     return render(request, "feeds/friends_feed.html", context)
 
+
 @login_required
 def profilePage_view(request):
     user = UserManagement(request).getCurrentUser()
@@ -80,11 +83,47 @@ def profilePage_view(request):
 
     user_posts = [post for post in posts_data if post["user"]["id"] == user.id]
 
-    context = {
-        "user": user,
-        "user_posts": user_posts
-    }
+    context = {"user": user, "user_posts": user_posts}
     return render(request, "profile.html", context)
+
+
+@csrf_exempt  # (temporär CSRF-Schutz deaktiviert – nur für Debugging-Zwecke)
+def createPostPage_view(request):
+    # Lade JSON-Daten aus der Datei
+    json_path = os.path.join(os.path.dirname(__file__), "objects/test_posts.json")
+    with open(json_path, "r", encoding="utf-8") as f:
+        posts_data = json.load(f)
+
+    # Extrahiere eindeutige Gruppen und Musikstücke aus den Posts
+    groups = {post["group"]["id"]: post["group"] for post in posts_data}
+    musics = {post["music"]["id"]: post["music"] for post in posts_data}
+
+    if request.method == "POST":
+        try:
+            # JSON-Daten aus dem Request-Body lesen
+            data = json.loads(request.body)
+            group_id = data.get("group_id")
+            music_id = data.get("music_id")
+            print("Empfangene Daten:", group_id, music_id)
+
+            # Erfolgsmeldung zurückgeben
+            return JsonResponse({"success": True})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=400)
+
+    # Bei GET einfach das Template anzeigen
+    return render(
+        request,
+        "create_post.html",
+        {
+            "groups": groups.values(),
+            "musics": musics.values(),
+        },
+    )
+
+
+def friendsPage_view(request):
+    return render(request, "friends.html")
 
 
 # BACKEND
@@ -126,9 +165,9 @@ def logout_view(request):
     UserManagement(request).logout()
     return redirect(reverse("home"))
 
+
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
-
 
 def friendsPage_view(request):
     return render(request, "friends.html")
@@ -225,3 +264,16 @@ def homepage_view(request):
         posts = json.load(f)
 
     return render(request, 'homepage.html', {'posts': posts})
+
+@require_GET
+def spotify_search_view(request):
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"error": "Fehlender Suchbegriff (q)"}, status=400)
+
+    try:
+        spotify = SpotifyConnector()
+        results = spotify.search_music_title(query, max_results=5)
+        return JsonResponse(results, safe=False)
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

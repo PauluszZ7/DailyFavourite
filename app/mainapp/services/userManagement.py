@@ -3,7 +3,7 @@ from typing import Any
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.dtos import UserDTO
 from mainapp.objects.exceptions import (

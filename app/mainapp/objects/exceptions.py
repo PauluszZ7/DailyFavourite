@@ -10,7 +10,7 @@ class DailyFavouriteBaseException(Exception):
     Attributes:
         status: Fehlerstatus der Exception
         message: Fehlermeldung als Klartext
-        context: Zusätslich wichtige Informationen zur Fehlerbehebung
+        context: Zusätzlich wichtige Informationen zur Fehlerbehebung
     """
 
     status: int
@@ -53,6 +53,48 @@ class DailyFavouriteAlreadyVotedForPost(DailyFavouriteBaseException):
 
     def __init__(self):
         message = "User has already voted for the post."
+        context = {}
+        super().__init__(500, message, context)
+
+
+class DailyFavouriteUserAlreadyInGroup(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "User is already within this group."
+        context = {}
+        super().__init__(500, message, context)
+
+
+class DailyFavouritePrivateGroupMustContainPassword(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "Could not create Group, because not password was set."
+        context = {}
+        super().__init__(500, message, context)
+
+
+class DailyFavouriteMaxPostsPerDayReached(DailyFavouriteBaseException):
+
+    def __init__(self, group_id, max_posts):
+        message = "User has reached maximum amount of allowed posts per day."
+        context = {"group_id": group_id, "max_posts": max_posts}
+        super().__init__(403, message, context)
+
+
+class DailyFavouriteUnallowedRoleAssignment(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = (
+            "You are not allowed to change the userroles to: admin, archive_viewer"
+        )
+        context = {}
+        super().__init__(500, message, context)
+
+
+class DailyFavouriteAlredyFriends(DailyFavouriteBaseException):
+
+    def __init__(self):
+        message = "Requested User and Friend are already friends."
         context = {}
         super().__init__(500, message, context)
 
@@ -105,3 +147,11 @@ class DailyFavouriteSpotifyInvalidBase62ID(DailyFavouriteBaseException):
         message = "Spotify ID is invalid and not a base62 ID"
         context = {"TrackID": track_id}
         super().__init__(400, message, context)
+
+
+class DailyFavouriteSpotifyNoConnectionPossible(DailyFavouriteBaseException):
+
+    def __init__(self, exception) -> None:
+        message = "No Spotify Connection possible, check .env.local within the static folder. See details."
+        context = {"error": exception}
+        super().__init__(500, message, context)

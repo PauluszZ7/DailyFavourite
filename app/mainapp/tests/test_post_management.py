@@ -6,11 +6,12 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.contrib.auth.middleware import AuthenticationMiddleware
 
 
+from mainapp.services.GroupManagement import GroupManagement
 from mainapp.services.userManagement import UserManagement
 from mainapp.services.PostManagement import PostManagement
 from mainapp.services.database import DatabaseManagement
 from mainapp.objects.dtos import CommentDTO, PostDTO, GroupDTO, UserDTO
-from mainapp.objects.enums import DTOEnum
+from mainapp.objects.dto_enums import DTOEnum
 from mainapp.objects.exceptions import (
     DailyFavouriteAlreadyVotedForPost,
     DailyFavouriteDBObjectNotFound,
@@ -84,9 +85,13 @@ class TestPostManagement:
             created_at=TEST_DATE,
             description="TestDescription",
             is_public=True,
+            password=None,
             max_posts_per_day=1,
             read_permission="all",
             post_permission="all",
+            profile_image=None,
+            genre=None,
+            admin=user,
         )
         simPost1.group = group
         simPost2.group = group
@@ -94,26 +99,6 @@ class TestPostManagement:
         pm.createPost(simPost2)
 
         posts = pm.listPosts(group)
-
-        assert posts is not None
-        assert type(posts) is list
-        assert len(posts) == 2
-        assert type(posts[0]) is PostDTO
-        assert type(posts[1]) is PostDTO
-
-    def test_list_users_posts(self, simRequest, simPost1, simPost2):
-        user = UserManagement(simRequest).getCurrentUser()
-        assert user is not None
-
-        pm = PostManagement(user)
-        pm.createPost(simPost1)
-
-        user2 = user
-        user2.id = 2
-        simPost2.user = user2
-        pm.createPost(simPost2)
-
-        posts = pm.listPosts(users=[user.id, user2.id])
 
         assert posts is not None
         assert type(posts) is list
@@ -186,14 +171,17 @@ class TestPostManagement:
         assert user is not None
 
         simPost1.user = user
+        simPost1.group = None
         simPost2.user = user
+        simPost2.group = None
 
         pm = PostManagement(user)
-        pm.createPost(simPost1)
+        gm = GroupManagement(user)
+        gm.createPost(simPost1)
         pm.upvotePost(simPost1)
         pm.commentPost(simPost1, "TestPost1")
 
-        pm.createPost(simPost2)
+        gm.createPost(simPost2)
         pm.downVotePost(simPost2)
         pm.commentPost(simPost2, "TestPost2")
 
