@@ -78,7 +78,7 @@ class PostManagement:
                     )
                 )
 
-            sorted_posts = sorted(dtos, key=lambda p: p.posted_at, reverse=True)
+            sorted_posts = self.sortPosts(dtos)
             return sorted_posts
 
         raise DailyFavouriteMinimumRequiredParameter(
@@ -90,6 +90,22 @@ class PostManagement:
 
     def deletePost(self, post: PostDTO) -> None:
         DatabaseManagement(self.user).delete(post, DTOEnum.POST)
+
+    def sortPosts(self, posts:List[PostDTO]) -> List[PostDTO]:
+        return sorted(posts, key=lambda p: p.posted_at, reverse=True)
+
+    def removeDuplicates(self, posts:List[PostDTO]) -> List[PostDTO]:
+        ids = []
+        non_duplicates = []
+
+        for post in posts:
+            if post.id in ids:
+                continue
+            else:
+                ids.append(post.id)
+                non_duplicates.append(post)
+
+        return non_duplicates
 
     def upvotePost(self, post: PostDTO) -> None:
         vote_dto = VoteDTO(None, self.user, post, True)

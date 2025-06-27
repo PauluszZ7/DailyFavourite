@@ -39,11 +39,12 @@ from mainapp.views import (
     delete_group_view,
     homepage_view,
     spotify_search_view,
+    friends_search_view,
 )
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", homepage_view, name="home"),
+    path("", homepage_view, name="home"),                                           # DONE
     path("login/", loginPage_view, name="login"),
     path("registration/", registrationPage_view, name="registration"),
     path("mainfeed/", mainfeedPage_view, name="mainfeed"),
@@ -52,6 +53,7 @@ urlpatterns = [
     path("homepage/", homepageFeed_view, name="homepage"),
     path("groupfeed/", groupFeed_view, name="groupfeed"),
     path("friends/", friendsPage_view, name="friends"),
+    path("friends/search/", friends_search_view, name='friends-search'),
     path("friendsfeed/", friendsFeed_view, name="friendsfeed"),
     path("post/create/", createPostPage_view, name="create-post"),
     path('groups/create/', create_group_view, name='group-create'),

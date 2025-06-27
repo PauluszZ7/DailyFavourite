@@ -6,6 +6,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.models import User
+
+from mainapp.objects.dto_enums import DTOEnum
+from mainapp.objects.exceptions import DailyFavouriteDBObjectNotFound
+from mainapp.services.FriendsManagement import FriendsManagement
+from mainapp.services.GroupManagement import GroupManagement
+from mainapp.services.PostManagement import PostManagement
+from mainapp.services.database import DatabaseManagement
 from mainapp.services.spotifyConnector import SpotifyConnector
 from django.views.decorators.http import require_GET
 
@@ -16,6 +24,95 @@ from django.utils import timezone
 from django.contrib import messages
 
 # FRONTEND
+@login_required
+def homepage_view(request):
+    # USED
+    posts = []
+
+    user = UserManagement(request).getCurrentUser()
+    try:
+        friends_post = FriendsManagement(user).listPosts()
+    except DailyFavouriteDBObjectNotFound:
+        friends_post = []
+
+    try:
+        my_posts = PostManagement(user).listPosts(users=[user.id])
+    except DailyFavouriteDBObjectNotFound:
+        my_posts = []
+
+    gm = GroupManagement(user)
+    groups = gm.listGroupsWhereUserIsMember()
+
+    if len(groups) > 0:
+        for group in groups:
+            try:
+                p = gm.listPosts(group)
+                posts.extend(p)
+            except:
+                continue
+
+    posts.extend(my_posts)
+    posts.extend(friends_post)
+    posts = PostManagement(user).removeDuplicates(posts)
+    posts = PostManagement(user).sortPosts(posts)
+    return render(request, 'homepage.html', {'posts': posts})
+
+@login_required
+def friendsPage_view(request):
+    # user = UserManagement(request).getCurrentUser()
+
+    # friends = FriendsManagement(user).getFriends()
+    
+    # if len(friends) == 0:
+    #     print("No Friends found")
+    #     admin = FriendsManagement(user).searchUsers("paul")[0]
+    #     FriendsManagement(user).addFriend(admin)
+    #     friends = FriendsManagement(user).getFriends()
+
+    # users = []
+    # serializer = DTOEnum.USER.getSerializer()
+    # for friend in friends:
+    #     users.append(DatabaseManagement(user).get(friend.friend, DTOEnum.USER))
+
+    # data = serializer(users, many=True).data
+    data = [{"id": 4, "username": "Lauryn", "profile_picture": None, "favorite_artist": "paul", "favorite_genre": "paul"},{"id": 4, "username": "paul", "profile_picture": None, "favorite_artist": "paul", "favorite_genre": "paul"}]
+    
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+def friends_search_view(request):
+    query = request.GET.get("q", "").strip()
+    if not query:
+        return JsonResponse({"error": "Fehlender Suchbegriff (q)"}, status=400)
+
+    user = UserManagement(request).getCurrentUser()
+    results = FriendsManagement(user).searchUsers(query)
+    if len(results) > 0:
+        serializer = DTOEnum.USER.getSerializer()
+        data = serializer(results, many=True).data
+    else:
+        data = []
+    return JsonResponse(data, safe=False)
+
+@login_required
+def friends_delete(request):
+    print("Jetzt wurde der Freund gelöscht")
+
+
+
+
+
+
+
+
+
+######  ALLES DARUNTER IGNORIEREN
+
+
+
+
+
 @login_required
 def mainPage_view(request):
     user = UserManagement(request).getCurrentUser()
@@ -122,8 +219,7 @@ def createPostPage_view(request):
     )
 
 
-def friendsPage_view(request):
-    return render(request, "friends.html")
+
 
 
 # BACKEND
@@ -156,6 +252,9 @@ def login_view(request):
         password = data.get("password")
 
         UserManagement(request).login(username, password)
+        user = UserManagement(request).getCurrentUser()
+        # Sicherstellen, dass es die Archive Gruppe gibt
+        GroupManagement(user)
         return JsonResponse({"redirect_url": reverse("home")})
 
     return JsonResponse({"error": "Nur POST erlaubt"}, status=405)
@@ -169,8 +268,6 @@ def logout_view(request):
 def vote_view(request):
     return JsonResponse("Du hast gevoted.")
 
-def friendsPage_view(request):
-    return render(request, "friends.html")
 
 
 @login_required
@@ -258,12 +355,6 @@ def delete_group_view(request, group_id):
     return redirect('my-groups')
 
 
-def homepage_view(request):
-    json_path = os.path.join(os.path.dirname(__file__), 'test_posts.json')
-    with open(json_path, 'r', encoding='utf-8') as f:
-        posts = json.load(f)
-
-    return render(request, 'homepage.html', {'posts': posts})
 
 @require_GET
 def spotify_search_view(request):
