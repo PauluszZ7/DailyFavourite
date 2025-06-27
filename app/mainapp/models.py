@@ -52,11 +52,12 @@ class Group(models.Model):
     is_public = models.BooleanField(default=True)
     password = models.CharField(max_length=50, null=True, blank=True)
     max_posts_per_day = models.IntegerField(default=1)
+    post_permission = models.CharField(max_length=50, default='member')
+    read_permission = models.CharField(max_length=50, default='member')
+    # profile_Image = models.ImageField(upload_to="group_images/", null=True, blank=True)
     genre = models.CharField(max_length=50, null=True, blank=True)
     admin = models.ForeignKey(UserMeta, on_delete=models.CASCADE)
     profile_image = models.CharField(max_length=200, null=True, blank=True)
-    post_permission = models.CharField(max_length=50)
-    read_permission = models.CharField(max_length=50)
 
 
 class Membership(models.Model):

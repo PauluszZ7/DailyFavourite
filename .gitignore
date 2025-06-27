@@ -178,3 +178,6 @@ cython_debug/
 
 
 YOLOv8_dataset/
+.schema
+.idea/
+group_images/
