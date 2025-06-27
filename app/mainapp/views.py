@@ -26,7 +26,7 @@ from mainapp.services.spotifyConnector import SpotifyConnector
 from django.views.decorators.http import require_GET
 
 from mainapp.services.userManagement import UserManagement
-from mainapp.objects.dtos import GroupDTO, UserDTO
+from mainapp.objects.dtos import GroupDTO, PostDTO, UserDTO
 
 
 
@@ -77,7 +77,7 @@ def friendsPage_view(request):
         users.append(DatabaseManagement(user).get(friend.friend, DTOEnum.USER))
 
     data = DTOEnum.USER.convertToJSON(users)
-    return JsonResponse(data, safe=False)
+    return render(request, "friends.html", {"friends": data})
 
 @login_required
 def friends_search_view(request):
@@ -237,20 +237,38 @@ def group_search_view(request):
 @login_required
 def createPostPage_view(request):
     user = UserManagement(request).getCurrentUser()
-    groups = GroupManagement(user).listGroupsWhereUserIsMember()
 
     if request.method == "POST":
-        try:
+        # try:
             # JSON-Daten aus dem Request-Body lesen
             data = json.loads(request.body)
             group_id = data.get("group_id")
             music_id = data.get("music_id")
-            print("Empfangene Daten:", group_id, music_id)
 
-            # Erfolgsmeldung zurückgeben
-            return JsonResponse({"success": True})
-        except Exception as e:
-            return JsonResponse({"success": False, "error": str(e)}, status=400)
+            # Theoretisch unmöglich jetzt in der Gruppe mit dem namen ___private___12345___ zu posten
+            if group_id == "___private___12345___":
+                group = None 
+                print("Privater Post")
+            else:
+                group = DatabaseManagement(user).get(int(group_id), DTOEnum.GROUP)
+
+            if music_id == "":
+                JsonResponse({"success": False, "error": "Keinen validen Spotify Song ausgewählt."}, status=400)
+            music = SpotifyConnector().get_Track(music_id)
+
+            post = PostDTO(
+                id=None,
+                user=user,
+                group=group,
+                music=music,
+                posted_at=datetime.now()
+            )
+            GroupManagement(user).createPost(post)
+            return redirect("home")
+        # except Exception as e:
+        #     return JsonResponse({"success": False, "error": str(e)}, status=400)
+    
+    groups = GroupManagement(user).listGroupsWhereUserIsMember()
 
     return render(request, "create_post.html", {"groups": groups})
 

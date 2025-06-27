@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load static %}
+{% csrf_token %}
 
 {% block content %}
 <div class="container mt-4">
@@ -10,7 +12,7 @@
     <div class="mb-3">
       <label for="group_id" class="form-label">Gruppe*</label>
       <select class="form-select" id="group_id" name="group_id" required>
-        <option value="">-- Bitte wählen --</option>
+        <option value="___private___12345___">Privater Post</option>
         {% for group in groups %}
           <option value="{{ group.id }}">{{ group.name }}</option>
         {% endfor %}
@@ -36,40 +38,61 @@
 </div>
 
 <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let cookie of cookies) {
+                    cookie = cookie.trim();
+                    if (cookie.startsWith(name + "=")) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
   // ========== LIVE-SUCHE ========== //
-  document.getElementById("music_search").addEventListener("input", async (e) => {
-    const query = e.target.value.trim();
-    const resultsDiv = document.getElementById("search_results");
-    
-    if (query.length < 2) {
-      resultsDiv.classList.add("d-none");
-      return;
-    }
+ document.getElementById("music_search").addEventListener("input", async (e) => {
+  const query = e.target.value.trim();
+  const resultsDiv = document.getElementById("search_results");
 
-    // Spotify-API abfragen
-    const response = await fetch(`/api/search/spotify/?q=${encodeURIComponent(query)}`);
-    const tracks = await response.json();
-    
-    // Ergebnisse anzeigen
-    if (tracks.length > 0) {
-      resultsDiv.innerHTML = tracks.map(track => `
-        <a href="#" class="list-group-item list-group-item-action" 
-           data-id="${track.id}"
-           onclick="
-             document.getElementById('music_search').value = '${track.name} - ${track.artist}';
-             document.getElementById('music_id').value = '${track.id}';
-             this.parentNode.classList.add('d-none');
-             document.getElementById('music_search').classList.remove('is-invalid');
-           ">
-          ${track.name} <small class="text-muted">${track.artist}</small>
-        </a>
-      `).join("");
-      resultsDiv.classList.remove("d-none");
-    } else {
-      resultsDiv.innerHTML = '<div class="list-group-item">Keine Ergebnisse</div>';
-    }
-  });
+  if (query.length < 2) {
+    resultsDiv.classList.add("d-none");
+    return;
+  }
 
+  const response = await fetch(`/api/search/spotify/?q=${encodeURIComponent(query)}`);
+  const tracks = await response.json();
+
+  resultsDiv.innerHTML = ''; // vorher leeren
+
+  if (tracks.length > 0) {
+    tracks.forEach(track => {
+      const displayValue = `${track.name} - ${track.artist}`;
+
+      const a = document.createElement('a');
+      a.href = '#';
+      a.className = 'list-group-item list-group-item-action';
+      a.dataset.id = track.id;
+      a.innerHTML = `${track.name} <small class="text-muted">${track.artist}</small>`;
+
+      a.addEventListener('click', (event) => {
+        event.preventDefault();
+        document.getElementById('music_search').value = displayValue;
+        document.getElementById('music_id').value = track.id;
+        resultsDiv.classList.add('d-none');
+        document.getElementById('music_search').classList.remove('is-invalid');
+      });
+
+      resultsDiv.appendChild(a);
+    });
+
+    resultsDiv.classList.remove("d-none");
+  } else {
+    resultsDiv.innerHTML = '<div class="list-group-item">Keine Ergebnisse</div>';
+  }
+}); 
   // ========== FORMULAR-VALIDIERUNG ========== //
   document.getElementById("postForm").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -85,7 +108,10 @@
     try {
       const response = await fetch("{% url 'create-post' %}", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCookie("csrftoken")
+        },
         body: JSON.stringify({
           group_id: document.getElementById("group_id").value,
           music_id: document.getElementById("music_id").value
@@ -93,7 +119,6 @@
       });
 
       if (response.ok) {
-        alert("Post erfolgreich erstellt!");
         form.reset();
       } else {
         const error = await response.json();

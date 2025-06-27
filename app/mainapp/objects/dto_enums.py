@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import List
+from dataclasses import asdict
 from mainapp.models import (
     Membership,
     UserMeta,
@@ -109,8 +110,7 @@ class DTOEnum(Enum):
     
     def convertToJSON(self, data: List[ModelDTO]):
         if len(data) > 0:
-            serializer = self.getSerializer() 
-            return serializer(data, many=True).data
+            return [asdict(obj) for obj in data]
         else:
             return []
 

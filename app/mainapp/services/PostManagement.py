@@ -95,16 +95,30 @@ class PostManagement:
         return sorted(posts, key=lambda p: p.posted_at, reverse=True)
 
     def removeDuplicates(self, posts:List[PostDTO]) -> List[PostDTO]:
-        ids = []
+        found = False
         non_duplicates = []
 
         for post in posts:
-            if post.id in ids:
+            if post.id in [p.id for p in non_duplicates]:
                 continue
+            if isinstance(post.user, int):
+                post.user = DatabaseManagement(self.user).get(post.user, DTOEnum.USER)
+            if isinstance(post.music, str):
+                post.music = DatabaseManagement(self.user).get(post.music, DTOEnum.MUSIC)
+            for p in non_duplicates:
+                if p.user == post.user and p.posted_at == post.posted_at and p.music == post.music:
+                    found = True
+                    break
+
+            if found:
+                found = False
+                continue
+            if isinstance(post.group, int):
+                post.group = DatabaseManagement(self.user).get(post.group, DTOEnum.GROUP)
             else:
-                ids.append(post.id)
                 non_duplicates.append(post)
 
+        print(non_duplicates)
         return non_duplicates
 
     def upvotePost(self, post: PostDTO) -> None:

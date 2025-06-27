@@ -29,12 +29,16 @@
     <h5 class="card-title">{{ post.music.name }}</h5>
     <p class="card-subtitle text-muted mb-2">von {{ post.music.artist }} – {{ post.music.album }}</p>
     <div style="text-align: center;">
-      <img src="{{ post.music.image_url }}" alt="Cover" class="img-fluid mb-1 rounded" style="width: 50%;">
+        <a href="{{ post.music.song_url }}" target="_blank">
+        <img src="{{ post.music.image_url }}" alt="Cover" class="img-fluid mb-1 rounded" style="width: 50%;">
+        </a>
     </div>
+    {% if post.music.preview_url != null %}
     <audio controls class="w-100 mb-3">
       <source src="{{ post.music.preview_url }}" type="audio/mpeg">
       Dein Browser unterstützt kein Audio.
     </audio>
+    {% endif %}
     {% if post.comments %}
       <hr>
       <h6>Kommentare</h6>

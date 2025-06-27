@@ -2,13 +2,12 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4 text-light">
-  <h2 class="mb-4 text-center fw-bold" style="color: #b783f1;">Freunde</h2>
+<div class="container mt-4">
+  <h2 class="mb-4 text-center fw-bold">Freunde</h2>
 
   <div class="mb-4 position-relative">
     <input id="friend_search" type="text" class="form-control rounded-pill px-4 py-2"
-           placeholder="Freunde suchen..." autocomplete="off"
-           style="background-color: #1e1e2f; border: 1px solid #b783f1; color: white;">
+           placeholder="Freunde suchen..." autocomplete="off">
     <div id="search_results" class="list-group position-absolute w-100 mt-2 d-none"
          style="z-index: 10;"></div>
   </div>
@@ -32,8 +31,7 @@
 
     if (users.length > 0) {
       resultsDiv.innerHTML = users.map(user => `
-        <a href="/profile/${user.id}" class="list-group-item list-group-item-action"
-           style="background-color: #2b2b3d; color: white;">
+        <a href="/profile/${user.id}" class="list-group-item list-group-item-action">
           <strong>${user.username}</strong> <small class="text-muted">(${user.favorite_genre})</small>
         </a>
       `).join('');
@@ -50,18 +48,16 @@
 
     container.innerHTML = friends.map(friend => `
       <div class="col">
-        <div class="card h-100 border-0 shadow text-white"
-             style="background: linear-gradient(145deg, #1e1e2f, #2b2b3d); border-radius: 20px;">
+        <div class="card h-100 border-0 shadow text-white">
           <div class="card-body text-center">
 
             ${friend.profile_picture
               ? `<img src="${friend.profile_picture}" class="rounded-circle mb-3" width="80" height="80">`
-              : `<div class="rounded-circle d-flex align-items-center justify-content-center mb-3"
-                       style="background-color: #9b59b6; width: 80px; height: 80px; font-size: 32px;">
+              : `<div class="rounded-circle d-flex align-items-center justify-content-center mb-3">
                    ${friend.username.charAt(0).toUpperCase()}
                  </div>`}
 
-            <h5 class="card-title fw-bold mb-1" style="color: #b783f1;">${friend.username}</h5>
+            <h5 class="card-title fw-bold mb-1">${friend.username}</h5>
             <p class="mb-1"><small>Künstler: ${friend.favorite_artist}</small></p>
             <p class="mb-3"><small>Genre: ${friend.favorite_genre}</small></p>
 
@@ -86,7 +82,7 @@
 </script>
 
 <style>
-  body {
+  /*body {
     background-color: #121212;
   }
   .card:hover {
@@ -96,6 +92,6 @@
   }
   #search_results a:hover {
     background-color: #512b75;
-  }
+  }*/
 </style>
 {% endblock %}
