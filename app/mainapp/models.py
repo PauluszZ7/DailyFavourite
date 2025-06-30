@@ -32,7 +32,6 @@ class Group(models.Model):
     password = models.CharField(max_length=50, null=True, blank=True)
     max_posts_per_day = models.IntegerField(default=1)
     post_permission = models.CharField(max_length=50, default="member")
-    read_permission = models.CharField(max_length=50, default="member")
     # profile_Image = models.ImageField(upload_to="group_images/", null=True, blank=True)
     genre = models.CharField(max_length=50, null=True, blank=True)
     admin = models.ForeignKey(UserMeta, on_delete=models.CASCADE)

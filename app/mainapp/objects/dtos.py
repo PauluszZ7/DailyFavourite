@@ -29,7 +29,6 @@ class GroupDTO(ModelDTO):
     password: str | None
     max_posts_per_day: int
     post_permission: str
-    read_permission: str
     admin: UserDTO
 
 

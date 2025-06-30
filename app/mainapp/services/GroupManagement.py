@@ -340,7 +340,6 @@ class GroupManagement:
             password=str(self.user.id),
             max_posts_per_day=-1,
             post_permission=RoleEnum.OWNER.value,
-            read_permission="members",
             admin=self.user,
         )
 

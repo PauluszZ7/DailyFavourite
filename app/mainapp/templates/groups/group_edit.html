@@ -70,15 +70,6 @@
       </select>
     </div>
 
-    <div class="mb-3">
-      <label for="read_permission" class="form-label">Wer darf lesen?</label>
-      <select name="read_permission" id="read_permission" class="form-select">
-        {% for value in permissions %}
-          <option value="{{ value }}" {% if group.read_permission == value %}selected{% endif %}>{{ value }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
     <div class="text-end">
       <button type="submit" class="btn btn-primary">Änderungen speichern</button>
     </div>
