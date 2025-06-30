@@ -83,5 +83,30 @@
   window.addEventListener("load", () => {
     passwordField.style.display = checkbox.checked ? "none" : "block";
   });
+  // Zusätzliche Validierung
+  document.querySelector("form").addEventListener("submit", function(e) {
+    let valid = true;
+
+    const genre = document.querySelector("select[name='genre']");
+    const passwordInput = document.querySelector("input[name='password']");
+
+    if (genre.value === "Bitte wählen" || genre.value === "") {
+      genre.classList.add("is-invalid");
+      valid = false;
+    } else {
+      genre.classList.remove("is-invalid");
+    }
+
+    if (!checkbox.checked && passwordInput.value.trim() === "") {
+      passwordInput.classList.add("is-invalid");
+      valid = false;
+    } else {
+      passwordInput.classList.remove("is-invalid");
+    }
+
+    if (!valid) {
+      e.preventDefault();
+    }
+  });
 </script>
 {% endblock %}
