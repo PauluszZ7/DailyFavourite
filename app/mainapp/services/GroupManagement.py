@@ -130,7 +130,8 @@ class GroupManagement:
             raise DailyFavouriteUserAlreadyInGroup()
         if (
             not group.is_public
-            and (group.password is not None or group.password != "")
+            and group.password is not None
+            and group.password != ""
             and group.password != password
         ):
             raise PermissionError("Incorrect password.")
