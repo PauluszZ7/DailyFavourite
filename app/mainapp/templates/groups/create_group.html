@@ -9,7 +9,7 @@
 
   <div class="mb-3">
     <label class="form-label">Name der Gruppe:</label>
-    <input type="text" name="name" class="form-control" required>
+    <input id="name-input" type="text" name="name" class="form-control" required>
   </div>
 
   <div class="mb-3">
@@ -89,6 +89,8 @@
 
     const genre = document.querySelector("select[name='genre']");
     const passwordInput = document.querySelector("input[name='password']");
+    const nameInput = document.getElementById("name-input");
+
 
     if (genre.value === "Bitte wählen" || genre.value === "") {
       genre.classList.add("is-invalid");
@@ -103,6 +105,14 @@
     } else {
       passwordInput.classList.remove("is-invalid");
     }
+
+    if(nameInput.value.trim() === ""){
+        nameInput.classList.add("is-invalid");
+        valid = false;
+    } else {
+        nameInput.classList.remove("is-invalid");
+    }
+
 
     if (!valid) {
       e.preventDefault();
