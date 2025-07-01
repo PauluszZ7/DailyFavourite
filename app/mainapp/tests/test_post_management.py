@@ -86,7 +86,6 @@ class TestPostManagement:
             is_public=True,
             password=None,
             max_posts_per_day=1,
-            read_permission="all",
             post_permission="all",
             profile_image=None,
             genre=None,

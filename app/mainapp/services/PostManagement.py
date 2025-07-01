@@ -242,7 +242,6 @@ class PostManagement:
                     "is_public": group.is_public,
                     "max_posts_per_day": group.max_posts_per_day,
                     "post_permission": group.post_permission,
-                    "read_permission": group.read_permission,
                 },
                 "music": {
                     "id": music.id,

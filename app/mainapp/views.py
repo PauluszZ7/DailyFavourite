@@ -172,7 +172,6 @@ def create_group_view(request):
         genre = request.POST.get("genre")
         max_posts = int(request.POST.get("max_posts_per_day") or -1)
         post_permission = request.POST.get("post_permission") or RoleEnum.MEMBER
-        read_permission = request.POST.get("read_permission") or RoleEnum.MEMBER
         profile_image = request.FILES.get("profile_Image") or None
 
         if profile_image:
@@ -198,7 +197,6 @@ def create_group_view(request):
             password=password,
             max_posts_per_day=max_posts,
             post_permission=post_permission,
-            read_permission=read_permission,
             admin=user,
         )
 
@@ -229,7 +227,6 @@ def edit_group_view(request, group_id):
         genre = request.POST.get("genre")
         max_posts = int(request.POST.get("max_posts_per_day") or -1)
         post_permission = request.POST.get("post_permission") or RoleEnum.MEMBER
-        read_permission = request.POST.get("read_permission") or RoleEnum.MEMBER
         # profile_image = request.FILES.get("profile_Image") or None
 
         group.name = name
@@ -240,7 +237,6 @@ def edit_group_view(request, group_id):
         group.genre = genre
         group.max_posts_per_day = max_posts
         group.post_permission = post_permission
-        group.read_permission = read_permission
         group.admin = DatabaseManagement(user).get(group.admin, DTOEnum.USER)
 
         try:
