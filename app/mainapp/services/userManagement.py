@@ -41,6 +41,17 @@ class UserManagement:
             return user_dto
         else:
             raise DailyFavouriteNoUserLoggedIn()
+        
+    def getUserInfo(self) -> UserDTO:
+        """
+        Gibt alle verfügbaren Informationen zum aktuell eingeloggten Nutzer zurück.
+        """
+        if not self.checkIsLoggedIn():
+            raise DailyFavouriteNoUserLoggedIn()
+
+        user_model = self.request.user
+        user_dto = DatabaseManagement(None).get(user_model.id, DTOEnum.USER)
+        return user_dto
 
     def login(self, username: str, password: str) -> None:
         """
