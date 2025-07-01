@@ -275,6 +275,12 @@ def group_search_view(request):
 
     user = UserManagement(request).getCurrentUser()
     results = GroupManagement(user).listGroups()
+    already_joint = GroupManagement(user).listGroupsWhereUserIsMember()
+
+    results = [result for result in results if result not in already_joint]
+
+    if len(results) > 10:
+        results = results[:10]
 
     data = []
     for group in results:
@@ -394,7 +400,10 @@ def join_group_view(request):
 
         user = UserManagement(request).getCurrentUser()
         group = DatabaseManagement(user).get(int(id), DTOEnum.GROUP)
-        GroupManagement(user).joinGroup(group, password)
+        try:
+            GroupManagement(user).joinGroup(group, password)
+        except PermissionError as e:
+            return JsonResponse({"message": "Incorrectes Passwort"}, status=403)
         return JsonResponse({"message": "user joint group"})
 
     return JsonResponse({"message": "wrong request type."})
@@ -421,6 +430,7 @@ def spotify_search_view(request):
         return JsonResponse({"error": str(e)}, status=500)
 
 
+@login_required
 def vote_view(request, post_id: int, vote_type: str):
     user = UserManagement(request).getCurrentUser()
     post = DatabaseManagement(user).get(post_id, DTOEnum.POST)
