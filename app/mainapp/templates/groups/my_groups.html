@@ -36,7 +36,6 @@
             <small class="d-block mt-1">
               <strong>Sichtbarkeit:</strong> {% if group.is_public %}Öffentlich{% else %}Privat{% endif %} |
               <strong>Posten erlaubt für:</strong> {{ group.post_permission }} |
-              <strong>Lesen erlaubt für:</strong> {{ group.read_permission }}
             </small>
           </div>
 
@@ -92,7 +91,7 @@ document.getElementById("group_search").addEventListener("input", async (e) => {
     wrapper.className = "list-group-item";
 
     const label = document.createElement('div');
-    label.textContent = `${group.is_public ? '(Öffentlich)' : '(Privat)'} ${group.name}`;
+      label.textContent = `${group.name}  | 👨🏻‍💻${group.admin}  |  ${group.is_public ? '(Öffentlich)' : '(Privat)'}`;
     wrapper.appendChild(label);
 
     const joinBtn = document.createElement('button');
@@ -116,16 +115,22 @@ document.getElementById("group_search").addEventListener("input", async (e) => {
       row.appendChild(joinBtn);
       wrapper.appendChild(row);
 
+      
       joinBtn.onclick = async () => {
         formData.set("password", passwordInput.value);
-        const res = await fetch("/friends/join/", {
+        const res = await fetch("/groups/join/", {
           method: "POST",
           headers: { "X-CSRFToken": getCookie("csrftoken") },
           body: formData
         });
         const result = await res.json();
-        alert(result.message);
+        if (result.message == "user joint group") {
+            window.location.reload();
+        } else {
+            alert(result.message || "Ein Fehler ist aufgetreten.");
+        }
       };
+
 
     } else {
       const btnWrapper = document.createElement('div');
@@ -134,13 +139,13 @@ document.getElementById("group_search").addEventListener("input", async (e) => {
       wrapper.appendChild(btnWrapper);
 
       joinBtn.onclick = async () => {
-        const res = await fetch("/friends/join/", {
+        const res = await fetch("/groups/join/", {
           method: "POST",
           headers: { "X-CSRFToken": getCookie("csrftoken") },
           body: formData
         });
         const result = await res.json();
-        alert(result.message);
+        window.location.reload();
       };
     }
 
