@@ -42,40 +42,46 @@ from mainapp.views import (
     friends_add,
     group_search_view,
     join_group_view,
+    leave_group_view,
+    remove_member_from_group_view,
+    update_user_role_view,
 )
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", homepage_view, name="home"),  # DONE
-    path("login/", loginPage_view, name="login"),  # DONE
-    path("registration/", registrationPage_view, name="registration"),  # DONE
-    path("profile/", profilePage_view, name="profile"),  # FAST DONE (PROFILBILD)
+    path("", homepage_view, name="home"),
+    path("login/", loginPage_view, name="login"),
+    path("registration/", registrationPage_view, name="registration"),
+    path("profile/", profilePage_view, name="profile"),
     path(
         "profile/<int:id>/", other_profilePage_view, name="other-profile"
-    ),  # FAST DONE (PROFILBILD)
-    path("friends/", friendsPage_view, name="friends"),  # FAST DONE (PROFIL FEHLT)
-    path("friends/search/", friends_search_view, name="friends-search"),  # DONE
-    path("friends/delete/<int:id>/", friends_delete, name="friends-delete"),  # DONE
-    path("friends/add/<int:id>/", friends_add, name="friends-delete"),  # DONE
-    path("post/create/", createPostPage_view, name="create-post"),  # DONE
-    path("groups/create/", create_group_view, name="group-create"),  # DONE
-    path("groups/", my_groups_view, name="my-groups"),  # FAST DONE (PROFILBILD)
+    ),
+    path("friends/", friendsPage_view, name="friends"),
+    path("friends/search/", friends_search_view, name="friends-search"),
+    path("friends/delete/<int:id>/", friends_delete, name="friends-delete"),
+    path("friends/add/<int:id>/", friends_add, name="friends-delete"),
+    path("post/create/", createPostPage_view, name="create-post"),
+    path("groups/create/", create_group_view, name="group-create"),
+    path("groups/", my_groups_view, name="my-groups"),
     path(
         "groups/join/", join_group_view, name="group-join"
-    ),  # FAST DONE (PRIVATE JOIN GEHT NICHT)
-    path("groups/<int:id>/", groupFeed_view, name="group-feed"),  # DONE
+    ),
+    path("groups/<int:id>/", groupFeed_view, name="group-feed"),
     path(
         "groups/<int:group_id>/edit/", edit_group_view, name="group-edit"
-    ),  # FAST DONE (PROFILBILD)
+    ),
+    path("groups/<int:group_id>/leave/", leave_group_view, name="group-leave"),
+    path("groups/<int:group_id>/remove-user/", remove_member_from_group_view, name="group-remove"),
+    path("groups/<int:group_id>/update-user/", update_user_role_view, name="group-update"),
     path(
         "groups/<int:group_id>/delete/", delete_group_view, name="delete_group"
-    ),  # DONE
-    path("api/login/", login_view, name="backend-login"),  # DONE
-    path("api/logout/", logout_view, name="backend-logout"),  # DONE
-    path("api/registration/", registration_view, name="backend-registration"),  # DONE
-    path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),  # DONE
-    path("api/search/spotify/", spotify_search_view, name="spotify-search"),  # DONE
-    path("api/search/group/", group_search_view, name="group-search"),  # DONE
+    ),
+    path("api/login/", login_view, name="backend-login"),
+    path("api/logout/", logout_view, name="backend-logout"),
+    path("api/registration/", registration_view, name="backend-registration"),
+    path("api/vote/<int:post_id>/<str:vote_type>/", vote_view, name="vote"),
+    path("api/search/spotify/", spotify_search_view, name="spotify-search"),
+    path("api/search/group/", group_search_view, name="group-search"),
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

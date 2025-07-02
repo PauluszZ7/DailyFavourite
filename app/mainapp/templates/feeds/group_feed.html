@@ -11,7 +11,7 @@
     <div class="card-body text-center">
       <img src="{% if group.profile_picture %}{{ group.profile_picture }}{% else %}/media/standards/group.jpg{% endif %}" alt="Profilbild" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
       <h4 class="card-title">@{{ group.name }}</h4>
-      <p class="text-muted">👨🏻‍💻{{ group.admin.username}}<br>🎧 {{ group.genre }}</p>
+      <p class="text-muted">{{ group.description }} <br>👨🏻‍💻{{ group.admin.username}}<br>🎧 {{ group.genre }} <br> 🛑{% if group.max_posts_per_day == -1 %}unbegrenzte Anzahl an Posts{% else %}{{ group.max_posts_per_day }} Posts am Tag{% endif %} <br> ✍ {% if group.post_permission == 'member' %}jeder darf{% elif group.post_permission == 'moderator' %}nur Moderatoren dürfen{% else %}nur Admin darf{% endif %} posten</p>
     </div>
   </div>
 
