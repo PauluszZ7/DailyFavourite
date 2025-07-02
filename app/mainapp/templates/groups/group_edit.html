@@ -3,6 +3,7 @@
 {% block title %}Gruppeneinstellungen{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container mt-4">
   <h2>Gruppeneinstellungen</h2>
   <form method="POST" enctype="multipart/form-data">
@@ -10,17 +11,17 @@
 
     <div class="mb-3">
       <label for="name" class="form-label">Name der Gruppe</label>
-      <input type="text" name="name" id="name" class="form-control" value="{{ group.name }}" required>
+      <input type="text" name="name" id="name" class="form-control" value="{{ group.name }}" required {% if userPermission != 'owner' %}disabled{% endif %}>
     </div>
 
     <div class="mb-3">
       <label for="description" class="form-label">Beschreibung</label>
-      <textarea name="description" id="description" class="form-control">{{ group.description }}</textarea>
+      <textarea name="description" id="description" class="form-control" {% if userPermission != 'owner' %}disabled{% endif %}>{{ group.description }}</textarea>
     </div>
 
     <div class="mb-3">
       <label class="form-label">Gruppenbild</label>
-<div id="imagePreview"
+      <div  {% if userPermission == 'owner' %}id="imagePreview"{% else %}id="imagePreviewNOT"{% endif %}
      class="rounded-circle bg-light mb-2 d-flex align-items-center justify-content-center"
      style="width: 120px; height: 120px;
             {% if group.profile_Image %}
@@ -30,26 +31,27 @@
             {% endif %}
             background-size: cover;
             background-position: center;
-            cursor: pointer;">
-  <span id="uploadIcon" class="fs-1 text-secondary m-0">+</span>
+            {% if userPermission == 'owner' %}cursor: pointer;"{% endif %}
+            >
+  <span id="uploadIcon" class="fs-1 text-secondary m-0">{% if userPermission == 'owner' %}+{% endif %}</span>
 </div>
 
       <input type="file" name="profile_Image" id="profile_Image" class="form-control d-none">
     </div>
 
 <div class="form-check mb-3">
-    <input type="checkbox" name="is_public" class="form-check-input" id="is_public" checked>
+    <input type="checkbox" name="is_public" class="form-check-input" id="is_public" checked {% if userPermission != 'owner' %}disabled{% endif %}>
     <label class="form-check-label" for="is_public" value={ group.is_public }>Öffentlich</label>
   </div>
 
   <div class="mb-3" id="password_field" style="display: none;">
-    <label class="form-label">Passwort:</label>
+    <label class="form-label" {% if userPermission != 'owner' %}disabled{% endif %}>Passwort:</label>
     <input type="password" name="password" class="form-control">
   </div>
 
     <div class="mb-3">
       <label for="genre" class="form-label">Genre</label>
-      <select name="genre" id="genre" class="form-select">
+      <select name="genre" id="genre" class="form-select" {% if userPermission != 'owner' %}disabled{% endif %}>
         {% for value in genres %}
           <option value="{{ value }}" {% if group.genre == value %}selected{% endif %}>{{ value }}</option>
         {% endfor %}
@@ -58,12 +60,12 @@
 
     <div class="mb-3">
       <label for="max_posts_per_day" class="form-label">Maximale Posts pro Tag</label>
-      <input type="number" name="max_posts_per_day" id="max_posts_per_day" class="form-control" value="{{ group.max_posts_per_day }}">
+      <input type="number" name="max_posts_per_day" id="max_posts_per_day" class="form-control" value="{{ group.max_posts_per_day }}" {% if userPermission != 'owner' %}disabled{% endif %}>
     </div>
 
     <div class="mb-3">
       <label for="post_permission" class="form-label">Wer darf posten?</label>
-      <select name="post_permission" id="post_permission" class="form-select">
+      <select name="post_permission" id="post_permission" class="form-select" {% if userPermission != 'owner' %}disabled{% endif %}>
         {% for value in permissions %}
           <option value="{{ value }}" {% if group.post_permission == value %}selected{% endif %}>{{ value }}</option>
         {% endfor %}
@@ -71,16 +73,55 @@
     </div>
 
     <div class="text-end">
-      <button type="submit" class="btn btn-primary">Änderungen speichern</button>
+      <button type="submit" class="btn btn-primary" {% if userPermission != 'owner' %}disabled{% endif %}>Änderungen speichern</button>
     </div>
-
+{% if userPermission == 'owner' %}
     <div class="text-end mt-4">
       <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
         Gruppe löschen
       </button>
     </div>
+{% else %}
+    <div class="text-end mt-4">
+      <button type="button" class="btn btn-danger" onclick="leaveGroup()">
+        Gruppe verlassen
+      </button>
+    </div>
+{% endif %}
   </form>
 </div>
+
+<br><br>
+<h4 class="mt-5">Mitglieder</h4>
+<ul class="list-group">
+  {% for member in group_users %}
+    <li class="list-group-item p-0">
+      <div class="d-flex justify-content-between align-items-center">
+        <a href="/profile/{{ member.id }}/" class="d-flex flex-grow-1 align-items-center text-decoration-none px-3 py-2">
+          {{ member.username }}
+        </a>
+        <select class="form-select form-select-sm w-auto me-2" {% if userPermission != 'owner' %}disabled{% endif %}
+        onchange="updateRole({{ member.id }}, this.value)"
+        {% if member.role == 'owner' %}disabled{% endif %}>
+  {% for role in permissions %}
+    {% if role != 'owner' or member.role == 'owner' %}
+      <option value="{{ role }}"
+              {% if role == member.role %}selected{% endif %}
+              {% if role == 'owner' %}disabled{% endif %}>
+        {{ role }}
+      </option>
+    {% endif %}
+  {% endfor %}
+</select>
+        <button class="btn btn-outline-danger btn-sm me-3" onclick="removeUser({{ member.id }})" {% if userPermission == 'member' %}disabled{% endif %}>
+          Entfernen
+        </button>
+      </div>
+    </li>
+  {% endfor %}
+</ul>
+
+
 
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
@@ -141,6 +182,81 @@
   window.addEventListener("load", () => {
     passwordField.style.display = checkbox.checked ? "none" : "block";
   });
+</script>
+<script>
+function leaveGroup() {
+  const currentPath = window.location.pathname;
+  const groupId = currentPath.split('/')[2];
+
+  fetch(`/groups/${groupId}/leave/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCSRFToken(),
+    },
+  })
+    .then((response) => {
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else {
+        return response.json().then(data => {
+          if (!data.success) alert(data.error);
+        });
+      }
+    })
+    .catch((error) => {
+      console.error("Fehler beim Verlassen der Gruppe:", error);
+    });
+}
+
+
+function removeUser(userId) {
+    const groupId = window.location.pathname.split("/")[2];
+    fetch(`/groups/${groupId}/remove-user/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body: new URLSearchParams({ user_id: userId }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.message === "User entfernt") {
+          window.location.reload();
+        }
+        alert(data.message);
+      })
+      .catch((error) => console.error("Fehler beim Entfernen:", error));
+}
+
+function updateRole(userId, newRole) {
+    const groupId = window.location.pathname.split("/")[2];
+    fetch(`/groups/${groupId}/update-user/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": getCSRFToken(),
+      },
+      body: new URLSearchParams({ user_id: userId, role: newRole }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.message !== "User entfernt") alert(data.message);
+      });
+  }
+
+function getCSRFToken() {
+  const name = "csrftoken=";
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const cookies = decodedCookie.split(';');
+  for (let cookie of cookies) {
+    while (cookie.charAt(0) === ' ') cookie = cookie.substring(1);
+    if (cookie.indexOf(name) === 0) {
+      return cookie.substring(name.length, cookie.length);
+    }
+  }
+  return "";
+}
 </script>
 
 {% endblock %}

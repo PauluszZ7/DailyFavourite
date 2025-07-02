@@ -91,7 +91,7 @@ document.getElementById("group_search").addEventListener("input", async (e) => {
     wrapper.className = "list-group-item";
 
     const label = document.createElement('div');
-    label.textContent = `${group.is_public ? '(Öffentlich)' : '(Privat)'} ${group.name}`;
+      label.textContent = `${group.name}  | 👨🏻‍💻${group.admin}  |  ${group.is_public ? '(Öffentlich)' : '(Privat)'}`;
     wrapper.appendChild(label);
 
     const joinBtn = document.createElement('button');

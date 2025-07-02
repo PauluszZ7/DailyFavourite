@@ -195,7 +195,13 @@ class GroupManagement:
 
     def removeUserFromGroup(self, group: GroupDTO, user: UserDTO) -> None:
         try:
-            if self._get_role_for_group(group=group) == RoleEnum.MEMBER:
+            role = self.get_role_for_group(group=group, user=user)
+            if role == RoleEnum.OWNER:
+                raise PermissionError("Admins können nicht entfernt werden.")
+            if self.get_role_for_group(group=group) == RoleEnum.MODERATOR:
+                if role == RoleEnum.OWNER or role == RoleEnum.MODERATOR:
+                    raise PermissionError("Als Moderator darfst du keine Moderator/Admins entfernen.")
+            if self.get_role_for_group(group=group) == RoleEnum.MEMBER:
                 raise PermissionError("Permission for removing a user denied.")
             memberships = DatabaseManagement(self.user).list(
                 group.id, DTOEnum.MEMBERSHIP, "group_id"
@@ -210,6 +216,8 @@ class GroupManagement:
 
     def changeUserRole(self, group: GroupDTO, user: UserDTO, role: RoleEnum):
         try:
+            if isinstance(group.admin, int):
+                group.admin = DatabaseManagement(self.user).get(group.admin, DTOEnum.USER)
             if self.user.id != group.admin.id:
                 raise PermissionError("Only Admins are allowed to change User Roles.")
 
@@ -221,7 +229,7 @@ class GroupManagement:
             if role == RoleEnum.ARCHIVE_VIEWER or role == RoleEnum.OWNER:
                 raise DailyFavouriteUnallowedRoleAssignment()
 
-            if role == self._get_role_for_group(group=group, user=user):
+            if role == self.get_role_for_group(group=group, user=user):
                 return None
 
             memberships = DatabaseManagement(self.user).list(
@@ -251,7 +259,7 @@ class GroupManagement:
             self.syncPostToArchiveGroup(post)
             return None
         max_posts = post.group.max_posts_per_day
-        current_role = self._get_role_for_group(post=post)
+        current_role = self.get_role_for_group(post=post)
         if isinstance(post.group.admin, int):
             post.group.admin = DatabaseManagement(self.user).get(
                 post.group.admin, DTOEnum.USER
@@ -284,7 +292,7 @@ class GroupManagement:
             raise PermissionError("Reading of Posts denied.")
 
     def deletePost(self, post: PostDTO) -> None:
-        current_role = self._get_role_for_group(post=post)
+        current_role = self.get_role_for_group(post=post)
         if (
             post.user.id != self.user.id
             and post.group.admin.id != self.user.id
@@ -419,7 +427,7 @@ class GroupManagement:
         else:
             raise DailyFavouriteDBObjectNotFound(DTOEnum.POST, -1)
 
-    def _get_role_for_group(
+    def get_role_for_group(
         self,
         post: PostDTO | None = None,
         group: GroupDTO | None = None,
