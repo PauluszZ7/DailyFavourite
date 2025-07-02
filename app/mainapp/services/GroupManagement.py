@@ -200,7 +200,9 @@ class GroupManagement:
                 raise PermissionError("Admins können nicht entfernt werden.")
             if self.get_role_for_group(group=group) == RoleEnum.MODERATOR:
                 if role == RoleEnum.OWNER or role == RoleEnum.MODERATOR:
-                    raise PermissionError("Als Moderator darfst du keine Moderator/Admins entfernen.")
+                    raise PermissionError(
+                        "Als Moderator darfst du keine Moderator/Admins entfernen."
+                    )
             if self.get_role_for_group(group=group) == RoleEnum.MEMBER:
                 raise PermissionError("Permission for removing a user denied.")
             memberships = DatabaseManagement(self.user).list(
@@ -217,7 +219,9 @@ class GroupManagement:
     def changeUserRole(self, group: GroupDTO, user: UserDTO, role: RoleEnum):
         try:
             if isinstance(group.admin, int):
-                group.admin = DatabaseManagement(self.user).get(group.admin, DTOEnum.USER)
+                group.admin = DatabaseManagement(self.user).get(
+                    group.admin, DTOEnum.USER
+                )
             if self.user.id != group.admin.id:
                 raise PermissionError("Only Admins are allowed to change User Roles.")
 
@@ -305,13 +309,16 @@ class GroupManagement:
         ):
             raise PermissionError("Delete permission denied.")
         PostManagement(self.user).deletePost(post)
-        if post.user.id == self.user.id:
-            archive_post = self._get_archive_post(post)
-            PostManagement(self.user).deletePost(archive_post)
-        else:
-            user = DatabaseManagement(self.user).get(post.user.id, DTOEnum.USER)
-            archive_post = GroupManagement(user)._get_archive_post(post)
-            PostManagement(self.user).deletePost(archive_post)
+        try:
+            if post.user.id == self.user.id:
+                archive_post = self._get_archive_post(post)
+                PostManagement(self.user).deletePost(archive_post)
+            else:
+                user = DatabaseManagement(self.user).get(post.user.id, DTOEnum.USER)
+                archive_post = GroupManagement(user)._get_archive_post(post)
+                PostManagement(self.user).deletePost(archive_post)
+        except Exception:
+            pass
 
     def get_archive(self) -> GroupDTO:
         memberships = DatabaseManagement(self.user).list(
