@@ -17,6 +17,7 @@ from mainapp.objects.enums import GenreEnum, RoleEnum
 from mainapp.objects.exceptions import (
     DailyFavouriteDBObjectNotFound,
     DailyFavouriteMaxPostsPerDayReached,
+    DailyFavouriteNoUserFound,
 )
 from mainapp.services.FriendsManagement import FriendsManagement
 from mainapp.services.GroupManagement import GroupManagement
@@ -458,6 +459,14 @@ def registration_view(request):
         favorite_artist = data.get("favorite_artist")
         favorite_genre = data.get("favorite_genre")
 
+        try:
+            users = DatabaseManagement(None).list_all(DTOEnum.USER)
+            names = [user.username for user in users]
+            if username in names:
+                return JsonResponse({"message": "Dieser Username ist schon vergeben!"}, status=500)
+        except DailyFavouriteDBObjectNotFound:
+            pass
+
         dto = UserDTO(
             id=None,
             username=username,
@@ -467,7 +476,7 @@ def registration_view(request):
         )
 
         UserManagement(request).register(username, password, dto)
-        return JsonResponse({"redirect_url": reverse("login")})
+        return JsonResponse({"redirect_url": reverse("login")}, status=403)
 
     return JsonResponse({"error": "Nur POST erlaubt"}, status=400)
 
@@ -478,7 +487,12 @@ def login_view(request):
         username = data.get("username")
         password = data.get("password")
 
-        UserManagement(request).login(username, password)
+        try:
+            UserManagement(request).login(username, password)
+        except DailyFavouriteNoUserFound:
+            return JsonResponse({"message": "Passwort und/oder Username stimmt nicht."})
+
+
         user = UserManagement(request).getCurrentUser()
         # Sicherstellen, dass es die Archive Gruppe gibt
         GroupManagement(user)
