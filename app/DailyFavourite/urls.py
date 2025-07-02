@@ -46,6 +46,7 @@ from mainapp.views import (
     remove_member_from_group_view,
     update_user_role_view,
     delete_post_view,
+    comment_post_view,
 )
 
 urlpatterns = [
@@ -61,6 +62,7 @@ urlpatterns = [
     path("friends/add/<int:id>/", friends_add, name="friends-delete"),
     path("post/create/", createPostPage_view, name="create-post"),
     path("post/<int:post_id>/delete/", delete_post_view, name="delete-post"),
+    path("post/<int:post_id>/comment/", comment_post_view, name="comment-post"),
     path("groups/create/", create_group_view, name="group-create"),
     path("groups/", my_groups_view, name="my-groups"),
     path("groups/join/", join_group_view, name="group-join"),

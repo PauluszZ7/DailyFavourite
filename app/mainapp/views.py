@@ -450,6 +450,22 @@ def registrationPage_view(request):
     return render(request, "registration.html", context)
 
 
+@login_required
+def comment_post_view(request, post_id):
+    if request.method == "POST":
+        comment = request.POST.get("comment") or None
+        user = UserManagement(request).getCurrentUser()
+        post = PostManagement(user).getPost(post_id)
+        if comment is None or comment == "":
+            return JsonResponse({"message": "Es wurde kein Kommentar übergeben."}, status=500)
+
+        PostManagement(user).commentPost(post, comment)
+        return JsonResponse({"message": "Kommentar erfolgreich erstellt."})
+
+    return JsonResponse({"error": "Nur POST erlaubt"}, status=403)
+
+
+
 # BACKEND
 def registration_view(request):
     if request.method == "POST":
@@ -478,7 +494,7 @@ def registration_view(request):
         UserManagement(request).register(username, password, dto)
         return JsonResponse({"redirect_url": reverse("login")}, status=403)
 
-    return JsonResponse({"error": "Nur POST erlaubt"}, status=400)
+    return JsonResponse({"error": "Nur POST erlaubt"}, status=403)
 
 
 def login_view(request):
@@ -498,7 +514,7 @@ def login_view(request):
         GroupManagement(user)
         return JsonResponse({"redirect_url": reverse("home")})
 
-    return JsonResponse({"error": "Nur POST erlaubt"}, status=405)
+    return JsonResponse({"error": "Nur POST erlaubt"}, status=403)
 
 
 @login_required

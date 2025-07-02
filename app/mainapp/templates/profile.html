@@ -65,7 +65,7 @@ function unfollow(id) {
     {% if user.id != profile_user.id and not is_following %}
     <button class="btn btn-outline-success" style="margin: 10px;" onclick="follow({{ profile_user.id }})">Folgen</button>
     {% elif user.id != profile_user.id and is_following %}
-    <button class="btn btn-outline-danger" style="margin: 10px;" onclick="unfollow({{ profile_user.id }})">Endfolgen</button>
+    <button class="btn btn-outline-danger" style="margin: 10px;" onclick="unfollow({{ profile_user.id }})">Entfolgen</button>
     {% endif %}
   </div>
 

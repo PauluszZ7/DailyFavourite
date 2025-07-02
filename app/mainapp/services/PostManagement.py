@@ -266,7 +266,7 @@ class PostManagement:
                             }
                         )(dbm.get(comment.user, DTOEnum.USER)),
                         "content": comment.content,
-                        "created_at": comment.created_at,
+                        "created_at": datetime.fromisoformat(comment.created_at),
                     }
                     for comment in comments
                 ],

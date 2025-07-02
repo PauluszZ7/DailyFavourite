@@ -1,5 +1,52 @@
 {% load static %}
 
+<script>
+function toggleCommentForm(postId) {
+  const el = document.getElementById(`comment-form-${postId}`);
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
+function submitComment(postId) {
+  const input = document.getElementById(`comment-input-${postId}`);
+  const text = input.value.trim();
+  if (text === "") {
+    alert("Kommentar darf nicht leer sein.");
+    return;
+  }
+
+  fetch(`/post/${postId}/comment/`, {
+    method: "POST",
+    headers: {
+      "X-CSRFToken": getCookie("csrftoken"),
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    body: new URLSearchParams({ comment: text })
+  })
+  .then(res => res.json())
+  .then(data => {
+    alert(data.message || "Kommentar gespeichert.");
+    input.value = "";
+    location.reload();
+  });
+}
+
+function getCookie(name) {
+let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+return cookieValue;
+}
+
+</script>
+
 {% for post in posts %}
 
 <div class="card mb-4 shadow-sm position-relative">
@@ -64,12 +111,28 @@
       Dein Browser unterstützt kein Audio.
     </audio>
     {% endif %}
+    <div class="d-flex justify-content-end align-items-center mt-3">
+      <button class="btn btn-sm btn-outline-secondary" onclick="toggleCommentForm({{ post.id }})">
+        <i class="bi bi-chat-dots"></i> Kommentieren
+      </button>
+    </div>
+
+    <div id="comment-form-{{ post.id }}" class="mt-2" style="display: none;">
+      <div class="input-group">
+        <input type="text" id="comment-input-{{ post.id }}" class="form-control" placeholder="Kommentar schreiben...">
+        <button class="btn btn-primary" onclick="submitComment({{ post.id }})">Kommentieren</button>
+      </div>
+</div>
     {% if post.comments %}
       <hr>
       <h6>Kommentare</h6>
       <ul class="list-unstyled">
         {% for comment in post.comments %}
-          <li class="mb-1"><strong>@{{ comment.user.username }}</strong>: {{ comment.content }}</li>
+       <li class="mb-1">
+  <span class="text-muted me-1">[{{ comment.created_at|date:"d.m.Y, H:i" }}]</span>
+  <a href="{% url 'other-profile' comment.user.id %}" class="fw-bold text-decoration-none">@{{ comment.user.username }}</a>:
+  {{ comment.content }}
+</li> 
         {% endfor %}
       </ul>
     {% endif %}
@@ -90,19 +153,7 @@ window.addEventListener("load", () => {
 });
 </script>
 <script>
-function getCookie(name) {
-let cookieValue = null;
-if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let cookie of cookies) {
-        cookie = cookie.trim();
-        if (cookie.startsWith(name + "=")) {
-            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            break;
-        }
-    }
-}
-return cookieValue;
+
 
 function deletePost(postId) {
   fetch(`/post/${postId}/delete/`, {
@@ -114,10 +165,10 @@ function deletePost(postId) {
   })
   .then(response => response.json())
   .then(data => {
-    alert(data.message);
     window.location.reload();
   });
 }
+
 </script>
 
   {% empty %}
