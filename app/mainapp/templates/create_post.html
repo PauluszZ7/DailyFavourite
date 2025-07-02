@@ -8,9 +8,7 @@
 
   <h2>Post erstellen</h2>
 
-  <!-- Formular mit Validierung -->
   <form id="postForm">
-    <!-- Gruppen-Auswahl -->
     <div class="mb-3">
       <label for="group_id" class="form-label">Gruppe*</label>
       <select class="form-select" id="group_id" name="group_id" required>
@@ -21,7 +19,6 @@
       </select>
     </div>
 
-    <!-- Spotify-Suche -->
     <div class="mb-3">
       <label for="music_search" class="form-label">Musik*</label>
       <input type="text" 
@@ -31,7 +28,7 @@
              autocomplete="off"
              required>
       <input type="hidden" id="music_id" name="music_id">
-      <div id="search_results" class="list-group mt-2 d-none"></div> <!-- Ergebnisse (initial versteckt) -->
+      <div id="search_results" class="list-group mt-2 d-none"></div>
       <div class="invalid-feedback">Bitte wähle einen Song aus</div>
     </div>
 
@@ -54,7 +51,6 @@
             }
             return cookieValue;
         }
-  // ========== LIVE-SUCHE ========== //
  document.getElementById("music_search").addEventListener("input", async (e) => {
   const query = e.target.value.trim();
   const resultsDiv = document.getElementById("search_results");
@@ -67,7 +63,7 @@
   const response = await fetch(`/api/search/spotify/?q=${encodeURIComponent(query)}`);
   const tracks = await response.json();
 
-  resultsDiv.innerHTML = ''; // vorher leeren
+  resultsDiv.innerHTML = '';
 
   if (tracks.length > 0) {
     tracks.forEach(track => {
@@ -95,18 +91,15 @@
     resultsDiv.innerHTML = '<div class="list-group-item">Keine Ergebnisse</div>';
   }
 }); 
-  // ========== FORMULAR-VALIDIERUNG ========== //
   document.getElementById("postForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const form = e.target;
     
-    // Pflichtfelder prüfen
     if (!document.getElementById("music_id").value) {
       document.getElementById("music_search").classList.add("is-invalid");
       return;
     }
 
-    // Formular absenden
     try {
       const response = await fetch("{% url 'create-post' %}", {
         method: "POST",

@@ -45,6 +45,7 @@ from mainapp.views import (
     leave_group_view,
     remove_member_from_group_view,
     update_user_role_view,
+    delete_post_view,
 )
 
 urlpatterns = [
@@ -53,29 +54,28 @@ urlpatterns = [
     path("login/", loginPage_view, name="login"),
     path("registration/", registrationPage_view, name="registration"),
     path("profile/", profilePage_view, name="profile"),
-    path(
-        "profile/<int:id>/", other_profilePage_view, name="other-profile"
-    ),
+    path("profile/<int:id>/", other_profilePage_view, name="other-profile"),
     path("friends/", friendsPage_view, name="friends"),
     path("friends/search/", friends_search_view, name="friends-search"),
     path("friends/delete/<int:id>/", friends_delete, name="friends-delete"),
     path("friends/add/<int:id>/", friends_add, name="friends-delete"),
     path("post/create/", createPostPage_view, name="create-post"),
+    path("post/<int:post_id>/delete/", delete_post_view, name="delete-post"),
     path("groups/create/", create_group_view, name="group-create"),
     path("groups/", my_groups_view, name="my-groups"),
-    path(
-        "groups/join/", join_group_view, name="group-join"
-    ),
+    path("groups/join/", join_group_view, name="group-join"),
     path("groups/<int:id>/", groupFeed_view, name="group-feed"),
-    path(
-        "groups/<int:group_id>/edit/", edit_group_view, name="group-edit"
-    ),
+    path("groups/<int:group_id>/edit/", edit_group_view, name="group-edit"),
     path("groups/<int:group_id>/leave/", leave_group_view, name="group-leave"),
-    path("groups/<int:group_id>/remove-user/", remove_member_from_group_view, name="group-remove"),
-    path("groups/<int:group_id>/update-user/", update_user_role_view, name="group-update"),
     path(
-        "groups/<int:group_id>/delete/", delete_group_view, name="delete_group"
+        "groups/<int:group_id>/remove-user/",
+        remove_member_from_group_view,
+        name="group-remove",
     ),
+    path(
+        "groups/<int:group_id>/update-user/", update_user_role_view, name="group-update"
+    ),
+    path("groups/<int:group_id>/delete/", delete_group_view, name="delete_group"),
     path("api/login/", login_view, name="backend-login"),
     path("api/logout/", logout_view, name="backend-logout"),
     path("api/registration/", registration_view, name="backend-registration"),

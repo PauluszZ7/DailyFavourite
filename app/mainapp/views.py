@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-from logging import warning
 import os
 import uuid
 
@@ -62,7 +61,7 @@ def homepage_view(request):
     posts = PostManagement(user).removeDuplicates(posts)
     posts = PostManagement(user).sortPosts(posts)
     posts = PostManagement(user).convert_to_json(posts)
-    return render(request, "homepage.html", {"posts": posts})
+    return render(request, "homepage.html", {"posts": posts, "can_delete": False})
 
 
 @login_required
@@ -90,7 +89,17 @@ def other_profilePage_view(request, id):
     except Exception:
         user_posts = []
 
-    context = {"profile_user": user, "posts": user_posts, "is_following": is_following}
+    if cur_user.id == user.id:
+        can_delete = True
+    else:
+        can_delete = False
+
+    context = {
+        "profile_user": user,
+        "posts": user_posts,
+        "is_following": is_following,
+        "can_delete": can_delete,
+    }
     return render(request, "profile.html", context)
 
 
@@ -157,7 +166,16 @@ def groupFeed_view(request, id):
     except Exception:
         posts = []
 
-    context = {"posts": posts, "group": group}
+    can_delete = False
+    role = GroupManagement(user).get_role_for_group(group=group)
+    if role == RoleEnum.ARCHIVE_VIEWER or role == RoleEnum.OWNER:
+        can_delete = True
+    elif (
+        role == RoleEnum.MODERATOR
+        and RoleEnum(RoleEnum.validate(group.post_permission)) != RoleEnum.OWNER
+    ):
+        can_delete = True
+    context = {"posts": posts, "group": group, "can_delete": can_delete}
     return render(request, "feeds/group_feed.html", context)
 
 
@@ -249,11 +267,14 @@ def edit_group_view(request, group_id):
 
     gm = GroupManagement(user)
     group_users = gm.getMembers(group)
-    group_users = [{
-        "id": user.id,
-        "username": user.username,
-        "role": gm.get_role_for_group(group=group, user=user).value
-    } for user in group_users]
+    group_users = [
+        {
+            "id": user.id,
+            "username": user.username,
+            "role": gm.get_role_for_group(group=group, user=user).value,
+        }
+        for user in group_users
+    ]
     context = {
         "genres": GenreEnum.get_values(),
         "permissions": RoleEnum.get_values(),
@@ -278,6 +299,7 @@ def delete_group_view(request, group_id):
     messages.warning(request, "Ungültige Anfrage.")
     return redirect("group-edit", group_id=group_id)
 
+
 @login_required
 def leave_group_view(request, group_id):
     user = UserManagement(request).getCurrentUser()
@@ -286,7 +308,7 @@ def leave_group_view(request, group_id):
     if request.method == "POST":
         try:
             GroupManagement(user).leaveGroup(group)
-        except DailyFavouriteDBObjectNotFound as e:
+        except DailyFavouriteDBObjectNotFound:
             return JsonResponse(
                 {"success": False, "error": "User ist nicht in der Gruppe."},
                 status=500,
@@ -309,7 +331,7 @@ def group_search_view(request):
 
     results = [result for result in results if result not in already_joint]
 
-    print("Results: ",[result.name for result in results])
+    print("Results: ", [result.name for result in results])
 
     if len(results) > 10:
         results = results[:10]
@@ -322,7 +344,9 @@ def group_search_view(request):
                     "name": group.name,
                     "id": group.id,
                     "is_public": group.is_public,
-                    "admin": DatabaseManagement(user).get(group.admin, DTOEnum.USER).username,
+                    "admin": DatabaseManagement(user)
+                    .get(group.admin, DTOEnum.USER)
+                    .username,
                 }
             )
     return JsonResponse(data, safe=False)
@@ -334,8 +358,6 @@ def createPostPage_view(request):
     user = UserManagement(request).getCurrentUser()
 
     if request.method == "POST":
-        # try:
-        # JSON-Daten aus dem Request-Body lesen
         data = json.loads(request.body)
         group_id = data.get("group_id")
         music_id = data.get("music_id")
@@ -369,11 +391,52 @@ def createPostPage_view(request):
                 },
                 status=403,
             )
+        except PermissionError:
+            messages.error(
+                request,
+                "Du hast keine Berechtigungen, um innerhalb der Gruppe Posten zu dürfen.",
+            )
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error": "Du hast keine Berechtigungen, um innerhalb der Gruppe Posten zu dürfen.",
+                },
+                status=403,
+            )
+
         return JsonResponse({"success": True, "redirect_url": reverse("home")})
 
     groups = GroupManagement(user).listGroupsWhereUserIsMember()
 
     return render(request, "create_post.html", {"groups": groups})
+
+
+@login_required
+def delete_post_view(request, post_id):
+    user = UserManagement(request).getCurrentUser()
+    post = DatabaseManagement(user).get(post_id, DTOEnum.POST)
+    if GroupManagement(user).get_role_for_group(post) == RoleEnum.ARCHIVE_VIEWER:
+        # get Group Posts if exists
+        posts = DatabaseManagement(user).list(user.id, DTOEnum.POST, "user_id")
+        for p in posts:
+            if (
+                post.music == p.music
+                and post.posted_at == p.posted_at
+                and p.user == post.user
+            ):
+                PostManagement(user).deletePost(p)
+    try:
+        PostManagement(user).deletePost(post)
+    except PermissionError:
+        return JsonResponse(
+            {
+                "success": False,
+                "error": "Keine Rechte um diesen Post löschen zu können.",
+            },
+            status=403,
+        )
+
+    return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
 def loginPage_view(request):
@@ -435,11 +498,12 @@ def join_group_view(request):
         group = DatabaseManagement(user).get(int(id), DTOEnum.GROUP)
         try:
             GroupManagement(user).joinGroup(group, password)
-        except PermissionError as e:
+        except PermissionError:
             return JsonResponse({"message": "Incorrectes Passwort"}, status=403)
         return JsonResponse({"message": "user joint group"})
 
     return JsonResponse({"message": "wrong request type."})
+
 
 @login_required
 def remove_member_from_group_view(request, group_id):
@@ -452,10 +516,11 @@ def remove_member_from_group_view(request, group_id):
         try:
             GroupManagement(user).removeUserFromGroup(group, remove_user)
         except PermissionError as e:
-            return JsonResponse({"message": str(e)},status=403)
+            return JsonResponse({"message": str(e)}, status=403)
         return JsonResponse({"message": "User entfernt"})
 
     return JsonResponse({"message": "wrong request type."})
+
 
 @login_required
 def update_user_role_view(request, group_id):
@@ -470,9 +535,11 @@ def update_user_role_view(request, group_id):
         group = DatabaseManagement(user).get(int(group_id), DTOEnum.GROUP)
         update_user = DatabaseManagement(user).get(user_id, DTOEnum.USER)
         try:
-            GroupManagement(user).changeUserRole(group, update_user, role=RoleEnum(RoleEnum.validate(role)))
+            GroupManagement(user).changeUserRole(
+                group, update_user, role=RoleEnum(RoleEnum.validate(role))
+            )
         except PermissionError as e:
-            return JsonResponse({"message": str(e)},status=403)
+            return JsonResponse({"message": str(e)}, status=403)
         return JsonResponse({"message": "User entfernt"})
 
     return JsonResponse({"message": "wrong request type."})
