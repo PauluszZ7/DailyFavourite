@@ -53,12 +53,14 @@ def homepage_view(request):
         for group in groups:
             try:
                 p = gm.listPosts(group)
+                print("EXTENDED MIT: ", p)
                 posts.extend(p)
             except Exception:
                 continue
 
     posts.extend(my_posts)
     posts.extend(friends_post)
+    print(len(posts))
     posts = PostManagement(user).removeDuplicates(posts)
     posts = PostManagement(user).sortPosts(posts)
     posts = PostManagement(user).convert_to_json(posts)
@@ -162,13 +164,20 @@ def groupFeed_view(request, id):
     group.admin = DatabaseManagement(user).get(group.admin, DTOEnum.USER)
     try:
         posts = GroupManagement(user).listPosts(group)
+        print(len(posts))
         posts = PostManagement(user).sortPosts(posts)
+        print(len(posts))
         posts = PostManagement(user).convert_to_json(posts)
-    except Exception:
+        print(len(posts))
+    except DailyFavouriteDBObjectNotFound:
         posts = []
 
     can_delete = False
-    role = GroupManagement(user).get_role_for_group(group=group)
+    try:
+        role = GroupManagement(user).get_role_for_group(group=group)
+    except PermissionError:
+        return redirect(request.META.get("HTTP_REFERER", "/"))
+
     if role == RoleEnum.ARCHIVE_VIEWER or role == RoleEnum.OWNER:
         can_delete = True
     elif (
@@ -457,13 +466,14 @@ def comment_post_view(request, post_id):
         user = UserManagement(request).getCurrentUser()
         post = PostManagement(user).getPost(post_id)
         if comment is None or comment == "":
-            return JsonResponse({"message": "Es wurde kein Kommentar übergeben."}, status=500)
+            return JsonResponse(
+                {"message": "Es wurde kein Kommentar übergeben."}, status=500
+            )
 
         PostManagement(user).commentPost(post, comment)
         return JsonResponse({"message": "Kommentar erfolgreich erstellt."})
 
     return JsonResponse({"error": "Nur POST erlaubt"}, status=403)
-
 
 
 # BACKEND
@@ -479,7 +489,9 @@ def registration_view(request):
             users = DatabaseManagement(None).list_all(DTOEnum.USER)
             names = [user.username for user in users]
             if username in names:
-                return JsonResponse({"message": "Dieser Username ist schon vergeben!"}, status=500)
+                return JsonResponse(
+                    {"message": "Dieser Username ist schon vergeben!"}, status=500
+                )
         except DailyFavouriteDBObjectNotFound:
             pass
 
@@ -507,7 +519,6 @@ def login_view(request):
             UserManagement(request).login(username, password)
         except DailyFavouriteNoUserFound:
             return JsonResponse({"message": "Passwort und/oder Username stimmt nicht."})
-
 
         user = UserManagement(request).getCurrentUser()
         # Sicherstellen, dass es die Archive Gruppe gibt
