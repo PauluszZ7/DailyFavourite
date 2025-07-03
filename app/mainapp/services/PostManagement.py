@@ -112,14 +112,12 @@ class PostManagement:
                     and p.posted_at == post.posted_at
                     and p.music == post.music
                 ):
-                    print("FOUND DUPLICATE!")
                     found = True
                     break
 
             if found:
                 found = False
                 continue
-            print("NO DUPLICATE FOUND")
             if isinstance(post.group, int):
                 post.group = DatabaseManagement(self.user).get(
                     post.group, DTOEnum.GROUP

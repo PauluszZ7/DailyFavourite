@@ -53,14 +53,12 @@ def homepage_view(request):
         for group in groups:
             try:
                 p = gm.listPosts(group)
-                print("EXTENDED MIT: ", p)
                 posts.extend(p)
             except Exception:
                 continue
 
     posts.extend(my_posts)
     posts.extend(friends_post)
-    print(len(posts))
     posts = PostManagement(user).removeDuplicates(posts)
     posts = PostManagement(user).sortPosts(posts)
     posts = PostManagement(user).convert_to_json(posts)
@@ -164,11 +162,8 @@ def groupFeed_view(request, id):
     group.admin = DatabaseManagement(user).get(group.admin, DTOEnum.USER)
     try:
         posts = GroupManagement(user).listPosts(group)
-        print(len(posts))
         posts = PostManagement(user).sortPosts(posts)
-        print(len(posts))
         posts = PostManagement(user).convert_to_json(posts)
-        print(len(posts))
     except DailyFavouriteDBObjectNotFound:
         posts = []
 
@@ -340,8 +335,6 @@ def group_search_view(request):
     already_joint = GroupManagement(user).listGroupsWhereUserIsMember()
 
     results = [result for result in results if result not in already_joint]
-
-    print("Results: ", [result.name for result in results])
 
     if len(results) > 10:
         results = results[:10]
