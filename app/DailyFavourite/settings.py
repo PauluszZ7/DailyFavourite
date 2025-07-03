@@ -27,7 +27,7 @@ SECRET_KEY = "django-insecure-+-zy5d_5-xu(p-ebew%+*@2ns1g5lyqwfbgk@pvc*!p)dr64x1
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "boar-game-bengal.ngrok-free.app",
+    "sharing-hog-relative.ngrok-free.app",
     "127.0.0.1",
 ]
 

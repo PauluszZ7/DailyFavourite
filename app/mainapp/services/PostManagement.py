@@ -122,8 +122,7 @@ class PostManagement:
                 post.group = DatabaseManagement(self.user).get(
                     post.group, DTOEnum.GROUP
                 )
-            else:
-                non_duplicates.append(post)
+            non_duplicates.append(post)
 
         return non_duplicates
 
@@ -225,6 +224,12 @@ class PostManagement:
             else:
                 music = dbm.get(post.music, DTOEnum.MUSIC)
 
+            # Einfacher Check ob es eine Archive Gruppe ist.
+            if len(group.name) == 36 and " " not in group.name:
+                is_archive = True
+            else:
+                is_archive = False
+
             post_json = {
                 "id": post.id,
                 "user": {
@@ -242,6 +247,7 @@ class PostManagement:
                     "is_public": group.is_public,
                     "max_posts_per_day": group.max_posts_per_day,
                     "post_permission": group.post_permission,
+                    "is_archive": is_archive,
                 },
                 "music": {
                     "id": music.id,
